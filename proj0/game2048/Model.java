@@ -110,26 +110,24 @@ public class Model extends Observable {
         boolean changed;
         changed = false;
         board.setViewingPerspective(side);
-
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
-        for (int col = 0; col < board.size(); col++) {
-            boolean [] merged = new boolean[board.size()];
-            for (int row = board.size() -2; row >=0; row--) {
+        for (int col = 0; col < this.board.size(); col++) {
+            boolean[] merge = new boolean[board.size()];
+            for (int row = this.board.size() -2; row >= 0; row--) {
                 Tile t = board.tile(col, row);
                 if (t != null) {
-                    int mv = rowMoveinOneCol(col, row, t.value(), merged);
-                    if (mv != row) {
-                        if (board.move(col, mv, t)) {
-                            score += t.value() * 2;
-                            merged[mv] = true;
+                    int mv2row = moverow(col, row, t.value(), this.board, merge);
+                        if (mv2row != row) {
+                            if (board.move(col, mv2row, t)) {
+                                score += t.value() * 2;
+                                merge[mv2row] = true;
+                            }
+                            changed = true;
                         }
-                        changed = true;
-                    }
                 }
-            }
-            
+             }
         }
         board.setViewingPerspective(Side.NORTH);
         checkGameOver();
@@ -138,19 +136,19 @@ public class Model extends Observable {
         }
         return changed;
     }
-    private int rowMoveinOneCol(int col, int row, int value, boolean[] merged) {
-        int mv = row;
-        for (int r = row + 1; r < board.size(); r++) {
-            Tile current = board.tile(col, r);
+    private int moverow(int col, int row, int val, Board b, boolean[] merge) {
+        int mv2row = row;
+        for (int i = row + 1; i < b.size(); i++) {
+            Tile current = b.tile(col, i);
             if (current == null) {
-                mv = r;
-            } else if (value == current.value() && !merged[r]) {
-                return r;
+                mv2row = i;
+            } else if (val == current.value() && !merge[i]) {
+                return i;
             } else {
-                return mv;
+                return mv2row;
             }
         }
-        return mv;
+        return mv2row;
     }
 
     /** Checks if the game is over and sets the gameOver variable
@@ -172,9 +170,9 @@ public class Model extends Observable {
         // TODO: Fill in this function.
         for (Tile t : b) {
             if (t == null) {
-                    return true;
-                }
+                return true;
             }
+        }
         return false;
     }
 
@@ -203,17 +201,16 @@ public class Model extends Observable {
         // TODO: Fill in this function.
         return emptySpaceExists(b) || atLeastOneMergeExists(b);
     }
-
     private static boolean atLeastOneMergeExists(Board b) {
-        for (int i = 0; i < b.size(); i ++) {
-            for (int j = 0; j < b.size() - 1; j ++) {
+        for (int i = 0; i < b.size(); i++ ) {
+            for (int j = 0; j < b.size() - 1; j++) {
                 Tile down = b.tile(i, j);
-                Tile up = b.tile(i, j+1);
+                Tile up = b.tile(i, j + 1);
                 if (down.value() == up.value()) {
                     return true;
                 }
                 Tile left = b.tile(j, i);
-                Tile right = b.tile(j+1, i);
+                Tile right = b.tile(j + 1, i);
                 if (left.value() == right.value()) {
                     return true;
                 }
