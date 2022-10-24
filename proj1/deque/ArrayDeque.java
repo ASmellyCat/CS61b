@@ -65,7 +65,7 @@ public class ArrayDeque<T> {
         return (size == 0) ? (true) : (false);
     }
 
-    private int size() {
+    public int size() {
         return size;
     }
 
