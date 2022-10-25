@@ -130,7 +130,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private class CallInterator implements Iterator<T> {
         private int wizPos;
 
-        public CallInterator() {
+        CallInterator() {
             wizPos = 0;
         }
 
