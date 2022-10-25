@@ -39,7 +39,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         if (cmp < 0) {
             return containsKey(node.left, key);
         } else if (cmp > 0) {
-            return  containsKey(node.right, key);
+            return containsKey(node.right, key);
         }
         return true;
     }
@@ -48,6 +48,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     public V get(K key) {
         return get(root, key);
     }
+
 
     private V get(BSTNode node, K key) {
         if (node == null) {
@@ -69,7 +70,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public void put(K key, V value) {
-        root = put(root, key,value);
+        root = put(root, key, value);
         size += 1;
     }
 
@@ -132,18 +133,18 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
                 return node.left;
             }
             BSTNode originalNode = node;
-            node = getMinChild(node.right);
+            node = minNode(node.right);
             node.left = originalNode.left;
             node.right = remove(originalNode.right, node.key);
         }
         return node;
     }
 
-    private BSTNode getMinChild(BSTNode node) {
+    private BSTNode minNode(BSTNode node) {
         if (node.left == null) {
             return node;
         }
-        return getMinChild(node.left);
+        return minNode(node.left);
     }
 
     public V remove(K key, V value) {
