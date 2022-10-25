@@ -110,12 +110,12 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         return item;
     }
 
-    public T getFirst() {
+    private T getFirst() {
         int ind = arrayInd(0);
         return items[ind];
     }
 
-    public T getLast() {
+    private T getLast() {
         int ind = arrayInd(size - 1);
         return items[ind];
     }
@@ -131,7 +131,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         return new CallInterator();
     }
 
-    public class CallInterator implements Iterator<T> {
+    private class CallInterator implements Iterator<T> {
         private int wizPos;
         public CallInterator() {
             wizPos = 0;

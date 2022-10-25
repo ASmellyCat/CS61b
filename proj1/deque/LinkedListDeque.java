@@ -30,7 +30,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         size = 0;
     }
 
-    public LinkedListDeque(T item) {
+    private LinkedListDeque(T item) {
         sentinel = new Node(null, null, null);
         sentinel.next = new Node(item, sentinel, sentinel);
         sentinel.prev = sentinel.next;
@@ -127,7 +127,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
         return new CallInterator();
     }
 
-    public class CallInterator implements Iterator<T> {
+    private class CallInterator implements Iterator<T> {
         private int wizPos;
 
         public CallInterator() {
