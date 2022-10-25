@@ -19,7 +19,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private void resize(int capacity) {
         T[] a = (T[]) new Object[capacity];
         int ind = 0;
-        for (int i = 0; i < size; i+= 1) {
+        for (int i = 0; i < size; i += 1) {
             ind = arrayInd(i);
             a[capacity / 4 + i] = items[ind];
         }
@@ -71,7 +71,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void printDeque() {
-        for (int i = 0; i < size; i+= 1) {
+        for (int i = 0; i < size; i += 1) {
             int ind = arrayInd(i);
             System.out.print(items[ind] + " ");
         }
@@ -83,7 +83,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if (isEmpty()) {
             return null;
         }
-        if (size < items.length/4 && size > 8) {
+        if (size < items.length / 4 && size > 8) {
             resize(items.length / RFACTOR);
         }
         T item = getFirst();
@@ -99,7 +99,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         if (isEmpty()) {
             return null;
         }
-        if (size < items.length/4 && size > 8) {
+        if (size < items.length / 4 && size > 8) {
             resize(items.length / RFACTOR);
         }
         T item = getLast();
@@ -128,19 +128,19 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return new callInterator();
+        return new CallInterator();
     }
 
-    public class callInterator implements Iterator<T> {
+    public class CallInterator implements Iterator<T> {
         private int wizPos;
-        public callInterator() {
+        public CallInterator() {
             wizPos = 0;
         }
         public boolean hasNext() {
             return wizPos < size;
         }
         public T next() {
-            T returnItem = items[wizPos];
+            T returnItem = get(wizPos);
             wizPos += 1;
             return returnItem;
         }
@@ -148,9 +148,9 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof ArrayDeque) {
-            ArrayDeque<T> oas = (ArrayDeque<T>) o;
-            if (oas.size != this.size) {
+        if (o instanceof Deque) {
+            Deque<T> oas = (Deque<T>) o;
+            if (oas.size() != this.size) {
                 return false;
             }
             for (int i = 0; i < size; i += 1) {
@@ -161,54 +161,6 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             return true;
         }
         return false;
-    }
-
-
-    public static void main(String[]Args) {
-        ArrayDeque<Integer> t = new ArrayDeque<>();
-        t.addFirst(1);
-        t.addFirst(2);
-        t.addFirst(3);
-        t.addFirst(4);
-        t.addFirst(5);
-        t.addFirst(6);
-        t.addLast(100);
-        t.addLast(99);
-        t.addLast(98);
-        t.addLast(97);
-        t.addLast(96);
-        t.addLast(95);
-        t.printDeque();
-        System.out.println(t.get(0));
-        t.removeLast();
-        t.removeFirst();
-        t.printDeque();
-        System.out.println(t.get(0));
-        t.removeLast();
-        t.removeFirst();
-        t.removeLast();
-        t.removeFirst();
-        t.removeLast();
-        t.removeFirst();
-        t.removeLast();
-        t.removeFirst();
-        t.removeLast();
-        t.removeFirst();
-        t.printDeque();
-        System.out.println(t.get(0));
-        System.out.println(t.isEmpty());
-
-        int n = 99;
-        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
-        for (int i = 0; i <= n; i++) {
-            ad1.addLast(i);
-        }
-        ArrayDeque<Integer> ad2 = new ArrayDeque<>();
-        for (int i = n; i >= 0; i--) {
-            ad2.addFirst(i);
-        }
-        ad1.printDeque();
-        System.out.println(ad1.equals(ad2));
     }
 
 }

@@ -2,9 +2,8 @@ package gh2;
 import deque.Deque;
 import deque.ArrayDeque;
 
-// TODO: uncomment the following import once you're ready to start this portion
 // import deque.Deque;
-// TODO: maybe more imports
+
 
 //Note: This file will not compile until you complete the Deque implementations
 public class GuitarString {
@@ -39,7 +38,7 @@ public class GuitarString {
      * the Karplus-Strong algorithm.
      */
     public void tic() {
-        double newSample = ((buffer.get(0) + buffer.get(1)) / 2.0) *DECAY;
+        double newSample = ((buffer.get(0) + buffer.get(1)) / 2.0) * DECAY;
         buffer.removeFirst();
         buffer.addLast(newSample);
     }

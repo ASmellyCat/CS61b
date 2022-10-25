@@ -6,8 +6,8 @@ import edu.princeton.cs.algs4.StdDraw;
  * A client that uses the synthesizer package to replicate a plucked guitar string sound
  */
 public class GuitarHero {
-    public static String KEYBOARD = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
-    public static int KEYS_AMOUNT = KEYBOARD.length();
+    private static String KEYBOARD = "q2we4r5ty7u8i9op-[=zxdcfvgbnjmk,.;/' ";
+    private static int KEYS_AMOUNT = KEYBOARD.length();
 
     public static void main(String[] args) {
         GuitarString[] guitarStrings = new GuitarString[KEYS_AMOUNT];
