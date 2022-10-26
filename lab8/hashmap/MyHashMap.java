@@ -132,8 +132,8 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         return node.value;
     }
 
-    private int getBucketIndex(K key, Collection<Node>[] buckets) {
-        return Math.floorMod(key.hashCode(), buckets.length);
+    private int getBucketIndex(K key, Collection<Node>[] b) {
+        return Math.floorMod(key.hashCode(), b.length);
     }
 
     private Node getNode(int bucketIndex, K key) {
