@@ -6,95 +6,98 @@ import org.junit.Test;
 import student.StudentArrayDeque;
 
 public class TestArrayDequeEC {
-    private final int TEST = 500000;
+    private final int TEST_NUMBER = 1000;
+
     @Test
-    public void testRemoveFirst() {
+    public void RemovalFirstTest() {
         StudentArrayDeque<Integer> s = new StudentArrayDeque<>();
         ArrayDequeSolution<Integer> a = new ArrayDequeSolution<>();
-        for (int i = 0; i < TEST; i += 1) {
+        for (int i = 0; i < TEST_NUMBER; i++) {
             s.addFirst(i);
             a.addFirst(i);
         }
-        for (int i = 0; i < TEST; i += 1) {
-            assertEquals(s.removeFirst(), a.removeFirst());
+        for (int i = 0; i < TEST_NUMBER; i++) {
+            assertEquals("The value should be equal", s.removeFirst(), a.removeFirst());
         }
     }
+
     @Test
-    public void testRemoveLast() {
+    public void removeLastTest() {
         StudentArrayDeque<Integer> s = new StudentArrayDeque<>();
         ArrayDequeSolution<Integer> a = new ArrayDequeSolution<>();
-        for (int i = 0; i < TEST; i += 1) {
+        for (int i = 0; i < TEST_NUMBER; i++) {
             s.addLast(i);
             a.addLast(i);
         }
-        for (int i = 0; i < TEST; i += 1) {
+        for (int i = 0; i < TEST_NUMBER; i++) {
             assertEquals("addFirst(5) \n"
                     + "addFirst(3)\n"
                     + "removeFirst()", s.removeLast(), a.removeLast());
         }
     }
+
     @Test
-    public void testAddFirst() {
+    public void addFirstTest() {
         StudentArrayDeque<Integer> s = new StudentArrayDeque<>();
         ArrayDequeSolution<Integer> a = new ArrayDequeSolution<>();
-        for (int i = 0; i < TEST; i += 1) {
+        for (int i = 0; i < TEST_NUMBER; i += 1) {
             s.addFirst(i);
             a.addFirst(i);
-            assertEquals(a.get(0), s.get(0));
+            assertEquals("The value should be equal", a.get(0), s.get(0));
         }
     }
+
     @Test
-    public void testAddLast() {
+    public void addLastTest() {
         StudentArrayDeque<Integer> s = new StudentArrayDeque<>();
         ArrayDequeSolution<Integer> a = new ArrayDequeSolution<>();
-        for (int i = 0; i < TEST; i += 1) {
+        for (int i = 0; i < TEST_NUMBER; i++) {
             s.addLast(i);
             a.addLast(i);
-            assertEquals(a.get(i), s.get(i));
+            assertEquals("The value should be equal", a.get(i), s.get(i));
         }
     }
+
     @Test
-    public void test() {
-        StudentArrayDeque<Integer> sad1 = new StudentArrayDeque<>();
-        ArrayDequeSolution<Integer> sad2 = new ArrayDequeSolution<>();
+    public void randomTest() {
+        StudentArrayDeque<Integer> s = new StudentArrayDeque<>();
+        ArrayDequeSolution<Integer> a = new ArrayDequeSolution<>();
         String errString = new String();
 
-        for (int i = 0; i < 10; i += 1) {
-            double numberBetweenZeroAndOne = StdRandom.uniform();
+        for (int i = 0; i < TEST_NUMBER; i++) {
+            double randomNumber = StdRandom.uniform();
 
-            if (numberBetweenZeroAndOne < 0.5) {
-                sad1.addLast(i);
-                sad2.addLast(i);
+            if (randomNumber > 0.5) {
+                s.addLast(i);
+                a.addLast(i);
                 errString += ("addLast(" + i + ")\n");
             } else {
-                sad1.addFirst(i);
-                sad2.addFirst(i);
+                s.addFirst(i);
+                a.addFirst(i);
                 errString += ("addFirst(" + i + ")\n");
             }
         }
-
-        // sad1.printDeque();
-        // System.out.println(sad2.toString());
         errString += ("size()\n");
-        assertEquals(errString, sad2.size(), sad1.size());
+        assertEquals(errString, s.size(), a.size());
 
-        for (int i = 0; i < 10; i += 1) {
+        for (int i = 0; i < TEST_NUMBER; i++) {
             double numberBetweenZeroAndOne = StdRandom.uniform();
 
-            if (numberBetweenZeroAndOne < 0.5) {
-                Integer item1 = sad1.removeLast();
-                Integer item2 = sad2.removeLast();
+            if (numberBetweenZeroAndOne > 0.5) {
+                Integer itemS = s.removeLast();
+                Integer itemA = a.removeLast();
                 errString += ("removeLast()\n");
-                assertEquals(errString, item2, item1);
+                assertEquals(errString, itemS, itemA);
             } else {
-                Integer item1 = sad1.removeFirst();
-                Integer item2 = sad2.removeFirst();
+                Integer itemS = s.removeFirst();
+                Integer itemA = a.removeFirst();
                 errString += ("removeFirst()\n");
-                assertEquals(errString, item2, item1);
+                assertEquals(errString, itemS, itemA);
             }
             errString += ("size()\n");
-            assertEquals(errString, sad2.size(), sad1.size());
+            assertEquals(errString, s.size(), a.size());
         }
     }
 }
+
 
