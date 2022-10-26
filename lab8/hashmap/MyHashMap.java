@@ -1,7 +1,5 @@
 package hashmap;
 
-import afu.org.checkerframework.checker.oigj.qual.O;
-
 import java.util.*;
 
 /**
@@ -240,8 +238,6 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
             nodeIterator = bucket.iterator();
             return next();
         }
-
-
 
     }
 }
