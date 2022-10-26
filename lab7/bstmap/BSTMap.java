@@ -1,24 +1,25 @@
 package bstmap;
 
+import edu.princeton.cs.algs4.BST;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     private class BSTNode {
-        public K key;
-        public V value;
-        public BSTNode left;
-        public BSTNode right;
+        private K key;
+        private V value;
+        private BSTNode left, right;
 
-        public BSTNode(K k, V v) {
+        BSTNode(K k, V v) {
             key = k;
             value = v;
         }
     }
 
     private BSTNode root;
-    private int size = 0;
+    private int size;
 
     @Override
     public void clear() {
@@ -28,39 +29,30 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public boolean containsKey(K key) {
-        return containsKey(root, key);
+        if (key == null) throw new IllegalArgumentException("Argument to contain() is null.");
+        return containsKeyHelp(root, key);
     }
 
-    private boolean containsKey(BSTNode node, K key) {
-        if (node == null) {
-            return false;
-        }
+    private boolean containsKeyHelp(BSTNode node, K key) {
+        if (node == null) return false;
         int cmp = key.compareTo(node.key);
-        if (cmp < 0) {
-            return containsKey(node.left, key);
-        } else if (cmp > 0) {
-            return containsKey(node.right, key);
-        }
-        return true;
+        if (cmp < 0) return containsKeyHelp(node.left, key);
+        else if (cmp > 0) return containsKeyHelp(node.right, key);
+        else return true;
     }
 
     @Override
     public V get(K key) {
-        return get(root, key);
+        return getHelp(root, key);
     }
 
-
-    private V get(BSTNode node, K key) {
-        if (node == null) {
-            return null;
-        }
+    private V getHelp(BSTNode node, K key) {
+        if (key == null) throw new IllegalArgumentException("Argument to contain() is null.");
+        if (node == null) return null;
         int cmp = key.compareTo(node.key);
-        if (cmp < 0) {
-            return get(node.left, key);
-        } else if (cmp > 0) {
-            return get(node.right, key);
-        }
-        return node.value;
+        if (cmp > 0) return getHelp(node.right, key);
+        else if (cmp < 0) return getHelp(node.left, key);
+        else return node.value;
     }
 
     @Override
@@ -70,92 +62,73 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
 
     @Override
     public void put(K key, V value) {
-        root = put(root, key, value);
+        if (key == null) throw new IllegalArgumentException("calls put() with a null key");
+        root = putHelp(root, key, value);
         size += 1;
     }
 
-    private BSTNode put(BSTNode node, K key, V value) {
-        if (node == null) {
-            return new BSTNode(key, value);
-        }
+    private BSTNode putHelp(BSTNode node, K key, V value) {
+        if (node == null) return new BSTNode(key, value);
         int cmp = key.compareTo(node.key);
-        if (cmp < 0) {
-            return put(node.left, key, value);
-        } else if (cmp > 0) {
-            return put(node.right, key, value);
-        } else {
-            node.value = value;
-        }
+        if (cmp < 0) node.left =  putHelp(node.left, key, value);
+        else if (cmp > 0) node.right = putHelp(node.right, key, value);
+        else node.value = value;
         return node;
     }
 
     @Override
     public Set<K> keySet() {
-        HashSet<K> set = new HashSet<>();
-        addKeys(root, set);
-        return set;
+        Set<K> keysets = new HashSet<>();
+        keySetHelp(root, keysets);
+        return keysets;
     }
 
-    private void addKeys(BSTNode node, Set<K> set) {
-        if (node == null) {
-            return;
-        }
+    private void keySetHelp(BSTNode node, Set<K> set) {
+        if (node == null) return;
         set.add(node.key);
-        addKeys(node.left, set);
-        addKeys(node.right, set);
+        keySetHelp(node.left, set);
+        keySetHelp(node.right, set);
     }
 
     @Override
     public V remove(K key) {
         if (containsKey(key)) {
-            V targetValue = get(key);
-            root = remove(root, key);
+            V returnValue = get(key);
+            root = removeHelp(root, key);
             size -= 1;
-            return targetValue;
+            return returnValue;
         }
         return null;
     }
 
-    private BSTNode remove(BSTNode node, K key) {
-        if (node == null) {
-            return null;
-        }
+    private BSTNode removeHelp(BSTNode node, K key) {
         int cmp = key.compareTo(node.key);
-        if (cmp < 0) {
-            node.left = remove(node.left, key);
-        } else if (cmp > 0) {
-            node.right = remove(node.right, key);
-        } else {
-            if (node.left == null) {
-                return node.right;
-            }
-            if (node.right == null) {
-                return node.left;
-            }
-            BSTNode originalNode = node;
-            node = minNode(node.right);
-            node.left = originalNode.left;
-            node.right = remove(originalNode.right, node.key);
+        if (cmp < 0) node.left = removeHelp(node.left, key);
+        else if (cmp > 0) node.right = removeHelp(node.right, key);
+        else {
+            if (node.left == null) return node.right;
+            if (node.right == null) return node.left;
+            BSTNode t = node;
+            node = min(t.right);
+            node.right = removeMin(t.right);
+            node.left = t.left;
+
         }
         return node;
     }
 
-    private BSTNode minNode(BSTNode node) {
-        if (node.left == null) {
-            return node;
-        }
-        return minNode(node.left);
+    private BSTNode removeMin(BSTNode node) {
+        if (node.left == null) return node.right;
+        node.left = removeMin(node.left);
+        return node;
+    }
+
+    private BSTNode min(BSTNode node) {
+        if (node.left == null) return node;
+        return min(node.left);
     }
 
     public V remove(K key, V value) {
-        if (containsKey(key)) {
-            V targetValue = get(key);
-            if (targetValue.equals(value)) {
-                root = remove(root, key);
-                size -= 1;
-                return targetValue;
-            }
-        }
         return null;
     }
 
@@ -164,17 +137,13 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     }
 
     public void printInOrder() {
-        printInOrder(root);
+        printInOrderHelp(root);
     }
 
-    private void printInOrder(BSTNode node) {
-        if (node == null) {
-            return;
-        }
-        printInOrder(node.left);
-        System.out.println(node.key.toString() + " -> " + node.value.toString());
-        printInOrder(node.right);
+    private void printInOrderHelp(BSTNode node) {
+        if (node == null) return;
+        printInOrderHelp(node.left);
+        System.out.print(node.key.toString() + " ");
+        printInOrderHelp(node.right);
     }
-
 }
-
