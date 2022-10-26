@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Iterator;
 
-public class ArrayDeque<T> implements Deque<T>, Iterable<T>{
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private T[] items;
     private int size;
     private int nextFirst;
@@ -21,7 +21,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T>{
             int ind = getArrayInd(i);
             a[capacity / 4 + i] = items[ind];
         }
-        nextFirst = capacity / 4 -1;
+        nextFirst = capacity / 4 - 1;
         nextLast = nextFirst + size + 1;
         items = a;
 
@@ -122,13 +122,13 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T>{
 
     @Override
     public Iterator<T> iterator() {
-        return new myInterator();
+        return new MyIterator();
     }
 
-    private class myInterator implements Iterator<T> {
+    private class MyIterator implements Iterator<T> {
         private int wizPos;
 
-        myInterator() {
+        MyIterator() {
             wizPos = 0;
         }
 
@@ -148,19 +148,19 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T>{
         }
     }
 
-        public boolean equals(Object o) {
-            if (o instanceof Deque) {
-                Deque<T> oas = (Deque) o;
-                if (oas.size() != this.size) {
+    public boolean equals(Object o) {
+        if (o instanceof Deque) {
+            Deque<T> oas = (Deque) o;
+            if (oas.size() != this.size) {
+                return false;
+            }
+            for (int i = 0; i < size; i++) {
+                if (!(oas.get(i).equals(this.get(i)))) {
                     return false;
                 }
-                for (int i = 0; i < size; i++) {
-                    if (!(oas.get(i).equals(this.get(i)))) {
-                        return false;
-                    }
-                }
-                return true;
             }
-            return false;
+            return true;
         }
+        return false;
+    }
 }
