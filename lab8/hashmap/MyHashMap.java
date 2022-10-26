@@ -113,16 +113,22 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     @Override
     public boolean containsKey(K key) {
-        if (key == null) throw new IllegalArgumentException("argument to contains() is null");
+        if (key == null) {
+            throw new IllegalArgumentException("argument to contains() is null");
+        }
         return get(key) != null;
     }
 
     @Override
     public V get(K key) {
-        if (key == null) throw new IllegalArgumentException("argument to contains() is null");
+        if (key == null) {
+            throw new IllegalArgumentException("argument to contains() is null");
+        }
         int bucketIndex = getBucketIndex(key, buckets);
         Node node = getNode(bucketIndex, key);
-        if (node == null) return null;
+        if (node == null) {
+            return null;
+        }
         return node.value;
     }
 
@@ -133,7 +139,9 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     private Node getNode(int bucketIndex, K key) {
         if (buckets[bucketIndex] != null) {
             for (Node node : buckets[bucketIndex]) {
-                if (node.key.equals(key)) return node;
+                if (node.key.equals(key)) {
+                    return node;
+                }
             }
         }
         return null;
@@ -146,18 +154,24 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     @Override
     public void put(K key, V value) {
-        if (key == null) return;
+        if (key == null) {
+            return;
+        }
         int bucketIndex = getBucketIndex(key, buckets);
         Node node = getNode(bucketIndex, key);
         if (node != null) {
             node.value = value;
             return;
         }
-        if (buckets[bucketIndex] == null) buckets[bucketIndex] = createBucket();
+        if (buckets[bucketIndex] == null) {
+            buckets[bucketIndex] = createBucket();
+        }
         buckets[bucketIndex].add(createNode(key, value));
         size += 1;
         keys.add(key);
-        if (isMaxLoad()) resize(buckets.length * 2);
+        if (isMaxLoad()) {
+            resize(buckets.length * 2);
+        }
 
     }
 
@@ -165,7 +179,9 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         Collection<Node>[] a = new Collection[capacity];
         for (K key : keys) {
             int busketIndex = getBucketIndex(key, a);
-            if (a[busketIndex] == null) a[busketIndex] = createBucket();
+            if (a[busketIndex] == null) {
+                a[busketIndex] = createBucket();
+            }
             a[busketIndex].add(createNode(key, get(key)));
         }
         buckets = a;
@@ -183,7 +199,9 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     @Override
     public V remove(K key) {
-        if (key == null) return null;
+        if (key == null) {
+            return null;
+        }
         int bucketIndex = getBucketIndex(key, buckets);
         Node node = getNode(bucketIndex, key);
         if (node != null) {
@@ -197,7 +215,9 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     @Override
     public V remove(K key, V value) {
-        if (key == null) return null;
+        if (key == null) {
+            return null;
+        }
         int bucketIndex = getBucketIndex(key, buckets);
         Node node = getNode(bucketIndex, key);
         if (node != null) {
