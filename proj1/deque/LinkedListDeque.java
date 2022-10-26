@@ -60,7 +60,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
         T returnItem = sentinel.next.item;
-        sentinel.next.prev = sentinel;
+        sentinel.next.next.prev = sentinel;
         sentinel.next = sentinel.next.next;
         size -= 1;
         return returnItem;
@@ -72,7 +72,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return null;
         }
         T returnItem = sentinel.prev.item;
-        sentinel.prev.next = sentinel;
+        sentinel.prev.prev.next = sentinel;
         sentinel.prev = sentinel.prev.prev;
         size -= 1;
         return returnItem;
@@ -109,12 +109,12 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return new myIterator();
+        return new MyIterator();
     }
 
-    private class myIterator implements Iterator<T> {
+    private class MyIterator implements Iterator<T> {
         private int wizPos;
-        myIterator() {
+        MyIterator() {
             wizPos = 0;
         }
 
