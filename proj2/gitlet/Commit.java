@@ -83,7 +83,7 @@ public class Commit implements Serializable {
      * @return String of SHA-1 ID.
      */
     private String generateCommitID() {
-        return sha1(getTimestamp(), message, parentID, tracked.toString());
+        return sha1(getTimestamp() + message +  parentID + tracked.toString());
     }
 
     /**

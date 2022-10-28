@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 import static gitlet.MyUtils.*;
@@ -138,7 +139,7 @@ public class Repository {
 
     /** initialize a null commit. */
     private static void initializeCommit() {
-        Commit initialCommit = new Commit(INITIAL_MESSAGE, null, null);
+        Commit initialCommit = new Commit(INITIAL_MESSAGE, null, new HashMap<>());
         activeBranch(INITIAL_BRANCH);
         writeContents(createBranchFile(INITIAL_BRANCH), initialCommit.sha1ID());
     }
@@ -160,8 +161,8 @@ public class Repository {
      * @return File of active branch.
      */
     private static File getActiveBranchFile() {
-        String activeBranchFilePath = readContentsAsString(HEAD).split(":")[1];
-        return join(GITLET_DIR,activeBranchFilePath);
+        String activeBranchFilePath = readContentsAsString(HEAD).split(":")[1].trim();
+        return join(GITLET_DIR, activeBranchFilePath);
     }
     /** Judge whether gitlet repository exist, and quit with a message if not. */
     private static void gitletRepoExists() {
