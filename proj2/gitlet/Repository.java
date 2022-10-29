@@ -208,11 +208,12 @@ public class Repository {
      * */
 
     public static void status() {
+        StagingArea stageArea = getStagingArea();
         printStatusFormat("Branches", getBranchNames());
-        printStatusFormat("Staged Files", getStagingArea().getStagedFiles());
-        printStatusFormat("Removed Files", getStagingArea().getRemovedFiles());
-        printStatusFormat("Modifications Not Staged For Commit", null);
-        printStatusFormat("Untracked Files", null);
+        printStatusFormat("Staged Files", stageArea.getStagedFiles());
+        printStatusFormat("Removed Files", stageArea.getRemovedFiles());
+        printStatusFormat("Modifications Not Staged For Commit", stageArea.getModifiedFilesButNotStaged());
+        printStatusFormat("Untracked Files", stageArea.getUntrackedFiles());
     }
 
     /**

@@ -53,9 +53,6 @@ public class HelpMethod implements Serializable{
         File file = join(HEADS_DIR, branchName);
         return readContentsAsString(file);
     }
-    public static Commit getCommitByBranchName(String branchName) {
-        return getCommit(getCommitIDByBranchName(branchName));
-    }
     /** get all commits and save it into a Set*/
     public static Set<Commit> getAllCommits() {
         Set<Commit> commitsSet = new HashSet<>();
@@ -202,7 +199,7 @@ public class HelpMethod implements Serializable{
         // check the short input commit ID such as 1d575e62
         if (fileName.length() < 38) {
             // get the full 38 digits file ID.
-            String fullFileName = shortCommitIDfind(fileDir, fileName.substring(0, 4));
+            String fullFileName = shortCommitIDFind(fileDir, fileName.substring(0, 4));
             if (fullFileName == null) {
                 exit("No commit with that id exists.");
             }
@@ -218,7 +215,7 @@ public class HelpMethod implements Serializable{
      * @param id String of 6 digits input commit ID.
      * @return String of fileName in full SHA-1 ID.
      * */
-    public static String shortCommitIDfind(File fileDir, String id) {
+    public static String shortCommitIDFind(File fileDir, String id) {
         List<String> fileNames = plainFilenamesIn(fileDir);
         for (String fileName : fileNames) {
             if (id.equals(fileName.substring(0,4))) {

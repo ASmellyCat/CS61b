@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.*;
 
 import static gitlet.MyUtils.exit;
+import static gitlet.Repository.HEADS_DIR;
 import static gitlet.Utils.*;
 
 /**Represents a staging area
@@ -22,7 +23,7 @@ public class StagingArea implements Serializable {
 
     /** Set of removed files with file path as key. */
     private final Set<String> removed;
-    /** set of tracked files with filepath as key and fileID(SHA1) as values. */
+    /** Set of tracked files with filepath as key and fileID(SHA1) as values. */
     private final Map<String, String> tracked;
     /**
      * Create a Staging object with specified parameters.
@@ -124,16 +125,75 @@ public class StagingArea implements Serializable {
         return tracked;
     }
 
+    /** get list of staged files path*/
     public List<String> getStagedFiles() {
         return new ArrayList<>(added.keySet());
     }
 
+    /** get list of tracked files path*/
     public List<String> getTrackedFiles() {
         return new ArrayList<>(tracked.keySet());
     }
 
+    /** get list of removed files path*/
     public List<String> getRemovedFiles() {
         return new ArrayList<>(removed);
+    }
+
+    /** get list of modified files path but not Staged.
+     * Tracked in the current commit, changed in the working directory, but not staged;
+     * Staged for addition, but with different contents than in the working directory;
+     * Staged for addition, but deleted in the working directory;
+     * Not staged for removal, but tracked in the current commit and deleted from the working directory.
+     * */
+    public List<String> getModifiedFilesButNotStaged() {
+        List<String> returnFileNames = new ArrayList<>();
+        List<String> fileNames = new ArrayList<>(tracked.keySet());
+        for (String filePath : fileNames) {
+            File workFile = join(filePath);
+            boolean isremoved = isRemoved(filePath);
+            boolean istracked = isTracked(filePath);
+            boolean isstaged = isAdded(filePath);
+            if (workFile.exists()) {
+                Blob workBlob = new Blob(workFile);
+
+                boolean ismodified = isModified(workBlob);
+                boolean isstagedButModified = isAddedButModified(workBlob);
+                if (ismodified && !isstaged) {
+                    returnFileNames.add(filePath + " (modified)");
+                } else if (isstagedButModified) {
+                    returnFileNames.add(filePath + " (modified)");
+                }
+            } else {
+                if (isstaged) {
+                    returnFileNames.add(filePath + " (deleted)");
+                } else if (!isremoved && istracked) {
+                    returnFileNames.add(filePath + " (deleted)");
+                }
+            }
+        }
+        return returnFileNames;
+    }
+
+    /** files present in the working directory but neither staged for addition nor tracked.
+     * This includes files that have been staged for removal, but then re-created without Gitlet’s knowledge.
+     * Ignore any subdirectories that may have been introduced, since Gitlet does not deal with them. */
+    public List<String> getUntrackedFiles() {
+        List<String> returnFileNames = new ArrayList<>();
+        List<String> fileNames = new ArrayList<>(plainFilenamesIn(Repository.CWD));
+        for (String fileName : fileNames) {
+            File file = join(fileName);
+            String filePath = file.getAbsolutePath();
+            boolean isstaged = isAdded(filePath);
+            boolean istracked = isTracked(filePath);
+            boolean isremoved = isRemoved(filePath);
+            if (!isstaged && !istracked) {
+                returnFileNames.add(filePath);
+            } else if (isremoved) {
+                returnFileNames.add(filePath);
+            }
+        }
+        return returnFileNames;
     }
 
     /** private Help method. /
@@ -150,6 +210,11 @@ public class StagingArea implements Serializable {
      */
     private boolean isAdded(String filePath) {
         return added.containsKey(filePath);
+    }
+
+    /** Staged for addition, but with different contents than a given file. */
+    private boolean isAddedButModified(Blob blob) {
+        return added.containsKey(blob.absolutePath()) && (!added.containsValue(blob.shaID()));
     }
     /**
      * Judge whether the file has the same path been removed from last commit.
