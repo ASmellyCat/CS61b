@@ -70,6 +70,29 @@ public class HelpMethod implements Serializable{
         }
         return commitsSet;
     }
+    /** reset a commit files.
+     * @param commitID String of a given commit SHA-1 ID */
+    public static void resetACommit(String commitID) {
+        StagingArea stageArea = getStagingArea();
+        Commit commitGiven = getCommit(commitID);
+        Map<String, String> trackedGiven = commitGiven.getFiles();
+        List<String> trackedCurrent =  stageArea.getTrackedFiles();
+        for (Map.Entry<String,String> entry: trackedGiven.entrySet()) {
+            String filePath = entry.getKey();
+            Blob blob = readObject(objectFile(entry.getValue()), Blob.class);
+            if (!trackedCurrent.contains(filePath)) {
+                if (getFileByAbsolutePath(filePath).length() != 0) {
+                    exit("There is an untracked file in the way; delete it, or add and commit it first.");
+                }
+            }
+            updateFileWithBlob(blob.getCurrentFile(), blob);
+            trackedCurrent.remove(filePath);
+        }
+        for (String filePath : trackedCurrent) {
+            restrictedDelete(filePath);
+        }
+        stageArea.updateAllTracked(trackedGiven);
+    }
     /**
      * Change HEAD file that points to the active branch.
      * @param branchName String of the name of branch.
@@ -229,10 +252,6 @@ public class HelpMethod implements Serializable{
      * */
     public static void updateFileWithBlob(File file, Blob blob) {
         writeContents(file, blob.getFileContents());
-    }
-
-    public static void resetACommit(Commit commit) {
-
     }
 
 }

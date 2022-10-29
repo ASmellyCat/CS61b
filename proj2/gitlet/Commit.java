@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 
 import static gitlet.HelpMethod.*;
-import static gitlet.MyUtils.*;
+import static gitlet.MyUtils.updateIntoFile;
 import static gitlet.Utils.*;
 
 import java.util.Locale;
@@ -67,9 +67,9 @@ public class Commit implements Serializable {
         }
         tracked = t;
         commitID = generateCommitID();
-        save();
         updateIntoFile(Repository.COMMITS, commitID);
         writeContents(getActiveBranchFile(), commitID);
+        save();
     }
 
     /**

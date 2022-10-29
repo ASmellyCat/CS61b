@@ -84,6 +84,7 @@ public class Repository {
         HEADS_DIR.mkdir();
         initializeCommit();
         new StagingArea();
+
     }
 
 
@@ -137,7 +138,7 @@ public class Repository {
             exit("No changes added to the commit.");
         }
         Map<String, String> tracked = getStagingArea().toCommit();
-        new Commit(message, getCurrentCommitID(), tracked);
+        Commit newCommit = new Commit(message, getCurrentCommitID(), tracked);
     }
     /**
      * log
@@ -259,26 +260,7 @@ public class Repository {
             exit("No need to checkout the current branch.");
         }
 
-        reset(getCommitIDByBranchName(branchName));
-        StagingArea stageArea = getStagingArea();
-        Commit commitGiven = getCommitByBranchName(branchName);
-        Map<String, String> trackedGiven = commitGiven.getFiles();
-        List<String> trackedCurrent =  stageArea.getTrackedFiles();
-        for (Map.Entry<String,String> entry: trackedGiven.entrySet()) {
-            String filePath = entry.getKey();
-            Blob blob = readObject(objectFile(entry.getValue()), Blob.class);
-            if (!trackedCurrent.contains(filePath)) {
-                if (getFileByAbsolutePath(filePath).length() != 0) {
-                    exit("There is an untracked file in the way; delete it, or add and commit it first.");
-                }
-            }
-            updateFileWithBlob(blob.getCurrentFile(), blob);
-            trackedCurrent.remove(filePath);
-        }
-        for (String filePath : trackedCurrent) {
-            restrictedDelete(filePath);
-        }
-        stageArea.updateAllTracked(trackedGiven);
+        resetACommit(getCommitIDByBranchName(branchName));
         activateBranch(branchName);
     }
 
@@ -328,26 +310,8 @@ public class Repository {
      *
      * */
     public static void reset(String commitID) {
-        StagingArea stageArea = getStagingArea();
-        Commit commitGiven = getCommit(commitID);
-        Map<String, String> trackedGiven = commitGiven.getFiles();
-        List<String> trackedCurrent =  stageArea.getTrackedFiles();
-        for (Map.Entry<String,String> entry: trackedGiven.entrySet()) {
-            String filePath = entry.getKey();
-            Blob blob = readObject(objectFile(entry.getValue()), Blob.class);
-            if (!trackedCurrent.contains(filePath)) {
-                if (getFileByAbsolutePath(filePath).length() != 0) {
-                    exit("There is an untracked file in the way; delete it, or add and commit it first.");
-                }
-            }
-            updateFileWithBlob(blob.getCurrentFile(), blob);
-            trackedCurrent.remove(filePath);
-        }
-        for (String filePath : trackedCurrent) {
-            restrictedDelete(filePath);
-        }
-        stageArea.updateAllTracked(trackedGiven);
-        activateBranch(branchName);
+        resetACommit(commitID);
+        writeContents(getActiveBranchFile(), commitID);
     }
 
 
