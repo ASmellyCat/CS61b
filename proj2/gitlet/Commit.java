@@ -43,6 +43,10 @@ public class Commit implements Serializable {
      */
     private final String parentID;
     /**
+     * SHA-1 ID of second parent ID (a given branch head commit when merged).
+     */
+    private final String secondParentID;
+    /**
      * Map of tracked files with filepath as key and fileID(SHA1) as values.
      */
     private final Map<String, String> tracked;
@@ -57,9 +61,10 @@ public class Commit implements Serializable {
      * @param p String of the parent SHA-1 ID of this new commit.
      * @param t ArrayList<String> the files SHA-1 IDs it points to.
      */
-    public Commit(String m, String p, Map<String, String> t) {
+    public Commit(String m, String p, String p2,Map<String, String> t) {
         message = m;
         parentID = p;
+        secondParentID = p2;
         if (parentID == null) {
             date = new Date(0);
         } else {
@@ -89,6 +94,13 @@ public class Commit implements Serializable {
     }
 
     /**
+     * get date of the time that this commit was created.
+     */
+    public Date getDate() {
+        return date;
+    }
+
+    /**
      * Get the timestamp string like Thu Nov 9 20:00:05 2017 -0800
      * @return String of timestamp of the time when this commit generated.
      */
@@ -106,6 +118,9 @@ public class Commit implements Serializable {
         return message;
     }
 
+    /**
+     *@return Map of tracked files.
+     * */
     public Map<String, String> getFiles() {
         return tracked;
     }

@@ -23,11 +23,6 @@ public class HelpMethod implements Serializable{
             exit("Not yet initialize a Getlet Repository.");
         }
     }
-    /** initialize a null commit. */
-    public static void initializeCommit() {
-        activateBranch(INITIAL_BRANCH);
-        new Commit(INITIAL_MESSAGE, null, new HashMap<>());
-    }
     /**
      * Get current commit SHA-1 ID
      * @return String of current commit SHA-1 ID
@@ -76,13 +71,13 @@ public class HelpMethod implements Serializable{
         List<String> trackedCurrent =  stageArea.getTrackedFiles();
         for (Map.Entry<String,String> entry: trackedGiven.entrySet()) {
             String filePath = entry.getKey();
-            Blob blob = readObject(objectFile(entry.getValue()), Blob.class);
+            Blob blob = getBlob(entry.getValue());
             if (!trackedCurrent.contains(filePath)) {
-                if (getFileByAbsolutePath(filePath).length() != 0) {
+                if (join(filePath).length() != 0) {
                     exit("There is an untracked file in the way; delete it, or add and commit it first.");
                 }
             }
-            updateFileWithBlob(blob.getCurrentFile(), blob);
+            updateFileWithBlob(filePath, blob);
             trackedCurrent.remove(filePath);
         }
         for (String filePath : trackedCurrent) {
@@ -90,6 +85,86 @@ public class HelpMethod implements Serializable{
         }
         stageArea.updateAllTracked(trackedGiven);
     }
+    /**
+     * get a latest common ancestor of two branches.
+     * */
+    public static Commit getSplitCommit(Commit headCommit, Commit otherCommit) {
+        Comparator<Commit> commitComparator = Comparator.comparing(Commit::getDate).reversed();
+        Queue<Commit> commitsQueue = new PriorityQueue<>(commitComparator);
+        commitsQueue.add(headCommit);
+        commitsQueue.add(otherCommit);
+        Set<String> checkedCommitIDs = new HashSet<>();
+        while (true) {
+            Commit latestCommit = commitsQueue.poll();;
+            String parentID = latestCommit.getParentID();
+            Commit parentCommit = getCommit(parentID);
+            if (checkedCommitIDs.contains(parentID)) {
+                return parentCommit;
+            }
+            commitsQueue.add(parentCommit);
+            checkedCommitIDs.add(parentID);
+        }
+    }
+
+    /**
+     * to merge by comparing files in HEAD Commit, other Commit and Split Commit.
+     * */
+    public static boolean toMerge(Commit splitCommit, Commit headCommit, Commit otherCommit) {
+        boolean flag = false;
+        StagingArea stageArea = getStagingArea();
+        Map<String, String> splitTracked = splitCommit.getFiles();
+        Map<String, String> headTracked = headCommit.getFiles();
+        Map<String, String> otherTracked = otherCommit.getFiles();
+        Set<String> checkedSplit = splitTracked.keySet();
+        Set<String> checkedOther = otherTracked.keySet();
+        for (String filePath : checkedSplit) {
+            checkedOther.remove(filePath);
+            String splitID = splitTracked.get(filePath);
+            String headID = headTracked.get(filePath);
+            String otherID = otherTracked.get(filePath);
+            if (headID != null) {
+                if (headID.equals(splitID)) {
+                    if (otherID == null) {
+                        restrictedDelete(filePath);
+                        stageArea.remove(filePath);
+                    } else if (!headID.equals(otherID)) {
+                        Blob otherBlob = getBlob(otherTracked.get(filePath));
+                        updateFileWithBlob(filePath, otherBlob);
+                        stageArea.add(otherBlob.getCurrentFile());
+                    }
+                } else if (otherID != null) {
+                    if (!otherID.equals(headID)) {
+                        Blob otherBlob = getBlob(otherTracked.get(filePath));
+                        Blob headBlob = getBlob(headTracked.get(filePath));
+                        updatedFileMerged(filePath, headBlob, otherBlob);
+                        flag = true;}
+                }
+            }
+        }
+        for (String filePath : checkedOther) {
+            String otherID = otherTracked.get(filePath);
+            String splitID = splitTracked.get(filePath);
+            String headID = headTracked.get(filePath);
+            if (splitID == null && headID == null) {
+                Blob otherBlob = getBlob(otherTracked.get(filePath));
+                if (getFileByName(filePath).length() != 0) {
+                    exit("There is an untracked file in the way; delete it, or add and commit it first.");
+                }
+                updateFileWithBlob(filePath, otherBlob);
+                stageArea.add(otherBlob.getCurrentFile());
+            }
+            if (splitID == null && headID != null && !otherID.equals(headID)) {
+                Blob otherBlob = getBlob(otherTracked.get(filePath));
+                Blob headBlob = getBlob(headTracked.get(filePath));
+                updatedFileMerged(filePath, headBlob, otherBlob);
+                flag = true;
+            }
+        }
+        return flag;
+    }
+
+
+
     /**
      * Change HEAD file that points to the active branch.
      * @param branchName String of the name of branch.
@@ -178,6 +253,14 @@ public class HelpMethod implements Serializable{
     }
 
     /**
+     * get blob given a SHA-1 ID.
+     * */
+    public static Blob getBlob(String blobID) {
+        return readObject(objectFile(blobID), Blob.class);
+    }
+
+
+    /**
      * save the object to temp.
      * @param file File that need to be used to store object.
      * @param obj Serializable object that need to be stored.
@@ -226,31 +309,24 @@ public class HelpMethod implements Serializable{
     }
 
     /**
-     * @param fileName String of a given fileName
-     * @return File that in CWD.
-     * */
-    public static File getFileByName(String fileName) {
-        return join(CWD, fileName);
-    }
-
-    public static File getFileByAbsolutePath(String filePath) {
-        return getFileByName(getRelativeFileName(filePath));
-    }
-
-    /**convert absolute file name to relative file name. */
-    public static String getRelativeFileName(String filePath) {
-        String[] s = filePath.split("/");
-        return s[s.length - 1];
-
-    }
-    /**
-     * @param file File of a existing file that needs to be written into.
+     * @param filePath String of a existing file that needs to be written into.
      * @param blob Blob of a stored file that need to overwrite a file.
      * */
-    public static void updateFileWithBlob(File file, Blob blob) {
-        writeContents(file, blob.getFileContents());
+    public static void updateFileWithBlob(String filePath, Blob blob) {
+        writeContents(join(filePath), blob.getFileContents());
     }
 
+    public static void updatedFileMerged(String filePath, Blob head, Blob given) {
+        String text1 = "<<<<<<< HEAD" +  "\n";
+        String text2 = head.getFileContents().toString();
+        String text3 = "\n" + "=======" + "\n";
+        String text4 = given.getFileContents().toString();
+        String text5 = "\n" + ">>>>>>>";
+        writeContents(join(filePath), text1 + text2 + text3 + text4 + text5);
+
+
+
+    }
 }
 
 

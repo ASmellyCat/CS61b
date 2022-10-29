@@ -4,9 +4,8 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
-import static gitlet.MyUtils.exit;
-import static gitlet.Repository.HEADS_DIR;
 import static gitlet.Utils.*;
+import static gitlet.MyUtils.*;
 
 /**Represents a staging area
  * @author ASmellyCat
@@ -60,13 +59,13 @@ public class StagingArea implements Serializable {
 
     /**
      * Add file to the removal area.
-     * @param file File that need to be added.
+     * @param filePath String of the file that need to be added.
      * 1. Unstage the file if it is currently staged for addition.
      * 2. If the file is tracked in the current commit, stage it for removal.
      */
-    public boolean remove(File file) {
-        boolean flag = false;
-        String filePath = file.getAbsolutePath();
+    public boolean remove(String filePath) {
+        filePath = absolutePath(filePath);
+        boolean flag = false;;
         if (isAdded(filePath)) {
             added.remove(filePath);
             flag = true;
@@ -156,7 +155,6 @@ public class StagingArea implements Serializable {
             boolean isstaged = isAdded(filePath);
             if (workFile.exists()) {
                 Blob workBlob = new Blob(workFile);
-
                 boolean ismodified = isModified(workBlob);
                 boolean isstagedButModified = isAddedButModified(workBlob);
                 if (ismodified && !isstaged) {
@@ -194,6 +192,11 @@ public class StagingArea implements Serializable {
             }
         }
         return returnFileNames;
+    }
+
+    /** If there are staged additions or removals present */
+    public boolean noStaged() {
+        return (added.isEmpty() && removed.isEmpty());
     }
 
     /** private Help method. /
