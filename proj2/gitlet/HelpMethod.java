@@ -118,7 +118,6 @@ public class HelpMethod implements Serializable{
         Set<String> checkedSplit = splitTracked.keySet();
         Set<String> checkedOther = otherTracked.keySet();
         for (String filePath : checkedSplit) {
-            checkedOther.remove(filePath);
             String splitID = splitTracked.get(filePath);
             String headID = headTracked.get(filePath);
             String otherID = otherTracked.get(filePath);
@@ -127,19 +126,20 @@ public class HelpMethod implements Serializable{
                     if (otherID == null) {
                         restrictedDelete(filePath);
                         stageArea.remove(filePath);
+                        flag = true;
                     } else if (!headID.equals(otherID)) {
                         Blob otherBlob = getBlob(otherTracked.get(filePath));
                         updateFileWithBlob(filePath, otherBlob);
                         stageArea.add(otherBlob.getCurrentFile());
+                        flag = true;
                     }
                 } else if (otherID != null) {
                     if (!otherID.equals(headID)) {
-                        Blob otherBlob = getBlob(otherTracked.get(filePath));
-                        Blob headBlob = getBlob(headTracked.get(filePath));
-                        updatedFileMerged(filePath, headBlob, otherBlob);
-                        flag = true;}
+                        flag = conflictMerge(filePath, headTracked, otherTracked);
+                    }
                 }
             }
+            checkedOther.remove(filePath);
         }
         for (String filePath : checkedOther) {
             String otherID = otherTracked.get(filePath);
@@ -152,17 +152,32 @@ public class HelpMethod implements Serializable{
                 }
                 updateFileWithBlob(filePath, otherBlob);
                 stageArea.add(otherBlob.getCurrentFile());
+                flag = true;
             }
             if (splitID == null && headID != null && !otherID.equals(headID)) {
-                Blob otherBlob = getBlob(otherTracked.get(filePath));
-                Blob headBlob = getBlob(headTracked.get(filePath));
-                updatedFileMerged(filePath, headBlob, otherBlob);
-                flag = true;
+                flag = conflictMerge(filePath, headTracked, otherTracked);
             }
         }
         return flag;
     }
 
+    /**
+     *
+     * */
+    public static boolean conflictMerge(String filePath, Map<String, String> headMap, Map<String, String> otherMap) {
+        Blob otherBlob = getBlob(otherMap.get(filePath));
+        Blob headBlob = getBlob(headMap.get(filePath));
+        updatedFileMerged(filePath, headBlob, otherBlob);
+        getStagingArea().add(otherBlob.getCurrentFile());
+        return true;
+    }
+
+    public static void overwriteMerge(String filePath, Map<String, String> headMap, Map<String, String> otherMap) {
+        Blob otherBlob = getBlob(otherMap.get(filePath));
+        Blob headBlob = getBlob(headMap.get(filePath));
+        updatedFileMerged(filePath, headBlob, otherBlob);
+        getStagingArea().add(otherBlob.getCurrentFile());
+    }
 
 
     /**
@@ -317,11 +332,11 @@ public class HelpMethod implements Serializable{
     }
 
     public static void updatedFileMerged(String filePath, Blob head, Blob given) {
-        String text1 = "<<<<<<< HEAD" +  "\n";
+        String text1 = "<<<<<<< HEAD" + "\n";
         String text2 = head.getFileContents().toString();
-        String text3 = "\n" + "=======" + "\n";
+        String text3 = "=======" + "\n";
         String text4 = given.getFileContents().toString();
-        String text5 = "\n" + ">>>>>>>";
+        String text5 = ">>>>>>>" + '\n';
         writeContents(join(filePath), text1 + text2 + text3 + text4 + text5);
 
 

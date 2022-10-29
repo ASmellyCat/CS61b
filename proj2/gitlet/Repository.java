@@ -139,7 +139,6 @@ public class Repository {
      */
     public static void removal(String fileName) {
         gitletRepoExists();
-        fileExists(fileName);
         if (!getStagingArea().remove(fileName)) {
             exit("No reason to remove the file.");
         }

@@ -1,1 +1,3 @@
-Another wug.
+<<<<<<< HEAD/rAnother wug.
+=======/rThis is not a wug.
+>>>>>>>
