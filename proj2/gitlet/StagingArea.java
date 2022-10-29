@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
+import static gitlet.MyUtils.exit;
 import static gitlet.Utils.*;
 
 /**Represents a staging area
@@ -79,12 +80,38 @@ public class StagingArea implements Serializable {
     }
 
     /**
+     * Unstage a file.
+     * @param filePath String of absolute filepath.
+     * */
+    public void unstage(String filePath, String fileID) {
+        if (added.containsKey(filePath)) {
+            added.remove(filePath);
+        }
+        if (removed.contains(filePath)) {
+            removed.remove(filePath);
+        }
+        tracked.put(filePath, fileID);
+        save();
+
+    }
+    /**
+     * Change all current tracked files to tracked files of a given branch points to.
+     * @
+     * */
+    public void updateAllTracked(Map<String, String> t) {
+        tracked.clear();
+        tracked.putAll(t);
+        clear();
+        save();
+    }
+
+    /**
      * Staging area change in each commit.
      * 1. each commit add the files in addition staging.
      * 2. remove files in removed staging area.
      * 3. clear the staging area.
      */
-    public Map<String, String> stageCommit() {
+    public Map<String, String> toCommit() {
         for (Map.Entry<String, Blob> entry : added.entrySet()) {
             tracked.put(entry.getKey(), entry.getValue().shaID());
             entry.getValue().save();
@@ -97,12 +124,16 @@ public class StagingArea implements Serializable {
         return tracked;
     }
 
-    /**
-     * get Staging Area instance from file ".gitlet/index".
-     * @return StagingArea instance.
-     */
-    public static StagingArea fromFile() {
-        return readObject(Repository.INDEX, StagingArea.class);
+    public List<String> getStagedFiles() {
+        return new ArrayList<>(added.keySet());
+    }
+
+    public List<String> getTrackedFiles() {
+        return new ArrayList<>(tracked.keySet());
+    }
+
+    public List<String> getRemovedFiles() {
+        return new ArrayList<>(removed);
     }
 
     /** private Help method. /
@@ -146,5 +177,4 @@ public class StagingArea implements Serializable {
         added.clear();
         removed.clear();
     }
-
 }

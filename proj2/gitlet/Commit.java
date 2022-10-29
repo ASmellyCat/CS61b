@@ -3,15 +3,17 @@ package gitlet;
 import java.io.File;
 import java.io.Serializable;
 
+import static gitlet.HelpMethod.*;
 import static gitlet.MyUtils.*;
 import static gitlet.Utils.*;
 
+import java.util.Locale;
 import java.util.Map;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
+// import java.util.TimeZone;
 
 /** Represents a gitlet commit object.
  * @author ASmellyCat
@@ -29,23 +31,23 @@ import java.util.TimeZone;
 public class Commit implements Serializable {
 
     /**
-     * The message of this commit.
+     * The input message of this commit.
      */
     private final String message;
     /**
-     * The date of this commit
+     * The date of this commit created.
      */
     private final Date date;
     /**
-     * ID of parent commit.
+     * SHA-1 ID of parent commit.
      */
     private final String parentID;
     /**
-     * ID of files this commit recorded.
+     * Map of tracked files with filepath as key and fileID(SHA1) as values.
      */
     private final Map<String, String> tracked;
     /**
-     * ID of this commit.
+     * SHA-1 ID of this commit.
      */
     private final String commitID;
 
@@ -66,15 +68,48 @@ public class Commit implements Serializable {
         tracked = t;
         commitID = generateCommitID();
         save();
+        updateIntoFile(Repository.COMMITS, commitID);
+        writeContents(getActiveBranchFile(), commitID);
     }
 
     /**
      * get the SHA-1 ID of this commit.
      * @return String of SHA-1 ID.
      * */
-    public String sha1ID() {
+    public String getCommitID() {
         return commitID;
     }
+
+    /**
+     * get the parent SHA-1 ID of this commit.
+     * @return String of parent SHA-1 ID
+     * */
+    public String getParentID() {
+        return parentID;
+    }
+
+    /**
+     * Get the timestamp string like Thu Nov 9 20:00:05 2017 -0800
+     * @return String of timestamp of the time when this commit generated.
+     */
+    public String getTimestamp() {
+        //DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss 'UTC,' EEEE',' d MMMM yyyy");
+        //dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.ENGLISH);
+        return dateFormat.format(date);
+    }
+    /**
+     * get the message of this commit.
+     * @return String of commit message.
+     * */
+    public String getMessage() {
+        return message;
+    }
+
+    public Map<String, String> getFiles() {
+        return tracked;
+    }
+
 
     /** private HELP method. */
 
@@ -85,17 +120,7 @@ public class Commit implements Serializable {
     private String generateCommitID() {
         return sha1(getTimestamp() + message +  parentID + tracked.toString());
     }
-
-    /**
-     * Get the timestamp string in UTC.
-     * @return String of timestamp of the time when this commit generated.
-     */
-    private String getTimestamp() {
-        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss 'UTC,' EEEE',' d MMMM yyyy");
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return dateFormat.format(date);
-    }
-
+    /** save this commit to Object file directory. */
     private void save() {
         File objectFile = objectFile(commitID);
         saveObjectFile(objectFile, this);

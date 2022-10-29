@@ -14,8 +14,10 @@ public class Main {
     public static void main(String[] args) {
         String fileName;
         String message;
+        String commitID;
+        String branchName;
         if (args.length == 0) {
-            exit("Must have at least one arguments. ");
+            exit("Please enter a command.");
         }
         String firstArg = args[0];
         switch(firstArg) {
@@ -24,20 +26,91 @@ public class Main {
                 Repository.init();
                 break;
             case "add": // Usage: java gitlet.Main add [file name]
+                Repository.isInitialized();
                 validateNumArgs("add", args, 2);
                 fileName = args[1];
                 Repository.add(fileName);
                 break;
-            case "rm": // java gitlet.Main rm [file name]
+            case "rm": // Usage: java gitlet.Main rm [file name]
+                Repository.isInitialized();
                 validateNumArgs("rm", args, 2);
                 fileName = args[1];
                 Repository.removal(fileName);
                 break;
-            case "commit": // java gitlet.Main commit [message]
+            case "commit": // Usage: java gitlet.Main commit [message]
+                Repository.isInitialized();
                 validateNumArgs("commit", args, 2);
                 message = args[1];
+                if (message.length() == 0) {
+                    exit("Please enter a commit message.");
+                }
                 Repository.commit(message);
                 break;
+            case "log": // Usage: java gitlet.Main log
+                Repository.isInitialized();
+                validateNumArgs("log", args, 1);
+                Repository.log();
+                break;
+            case "global-log": // Usage: java gitlet.Main global-log
+                Repository.isInitialized();
+                validateNumArgs("global-log", args, 1);
+                Repository.globalLog();
+                break;
+            case "find": // Usage: java gitlet.Main find [commit message]
+                Repository.isInitialized();
+                validateNumArgs("find", args, 2);
+                message = args[1];
+                Repository.find(message);
+                break;
+            case "status": // Usage: java gitlet.Main status
+                Repository.isInitialized();
+                validateNumArgs("status", args, 1);
+                Repository.status();
+                break;
+            case "checkout": // Usage: java gitlet.Main status
+                Repository.isInitialized();
+                switch(args.length) {
+                    case 4: // java gitlet.Main checkout [commit id] -- [file name]
+                        if (!args[2].equals("--")) {
+                            exit("Incorrect operands.");
+                        }
+                        commitID = args[1];
+                        fileName = args[3];
+                        Repository.checkout(commitID, fileName);
+                        break;
+                    case 3:// java gitlet.Main checkout -- [file name]
+                        if (!args[1].equals("--")) {
+                            exit("Incorrect operands.");
+                        }
+                        fileName = args[2];
+                        Repository.checkout(fileName);
+                        break;
+                    case 2: // java gitlet.Main checkout [branch name]
+                        branchName = args[1];
+                        Repository.checkoutBranch(branchName);
+                        break;
+                }
+                break;
+            case "branch": // Usage: java gitlet.Main branch [branch name]
+                Repository.isInitialized();
+                validateNumArgs("branch", args, 2);
+                branchName = args[1];
+                Repository.branch(branchName);
+                break;
+            case "rm-branch": // Usage: java gitlet.Main branch [branch name]
+                Repository.isInitialized();
+                validateNumArgs("rm-branch", args, 2);
+                branchName = args[1];
+                Repository.rmBranch(branchName);
+                break;
+            case "reset": // Usage: java gitlet.Main reset [commit id]
+                Repository.isInitialized();
+                validateNumArgs("reset", args, 2);
+                commitID = args[1];
+                Repository.reset(commitID);
+                break;
+            default:
+                exit("No command with that name exists.");
         }
     }
 

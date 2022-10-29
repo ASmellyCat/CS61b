@@ -6,12 +6,8 @@ package gitlet;
 import static gitlet.Utils.*;
 import java.io.File;
 import java.io.Serializable;
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
-import java.util.function.Supplier;
 
-public class MyUtils {
+public class MyUtils implements Serializable{
     public static void exit(String message) {
         if (message != null && !message.equals("")) {
             System.out.println(message);
@@ -19,27 +15,23 @@ public class MyUtils {
         System.exit(0);
     }
 
-    public static void saveObjectFile(File file, Serializable obj) {
-        File dir = file.getParentFile();
-        if (!dir.exists()) {
-            dir.mkdir();
+    /** Judge whether the file exist, and quit with a message if not. */
+    public static void fileExists(File file) {
+        if (!file.exists()) {
+            exit("File does not exists. ");
         }
-        writeObject(file, obj);
     }
 
-    /** get directory of temp object file stored in OBJECT_FILE. */
-    public static File objectDir(String id) {
-        return join(Repository.OBJECT_DIR, id.substring(0, 2));
+
+    public static void updateIntoFile(File file, String text) {
+        String updatedText;
+        if (!file.exists()) {
+            updatedText = text;
+        } else {
+            updatedText = readContentsAsString(file) + text;
+        }
+        writeContents(file, updatedText);
     }
-    /** get file of temp object file stored in OBJECT_FILE. */
-    public static String objectFileName(String id) {
-        return id.substring(2);
-    }
-    /** get the temp object file stored in OBJECT_FILE. */
-    public static File objectFile(String id) {
-        File fileDir = objectDir(id);
-        fileDir.mkdir();
-        return join(fileDir, objectFileName(id));
-    }
+
 
 }

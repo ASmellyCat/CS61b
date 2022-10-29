@@ -2,18 +2,22 @@ package gitlet;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static gitlet.MyUtils.*;
 import static gitlet.Utils.*;
+import static gitlet.HelpMethod.*;
 
 /** Represents a gitlet repository.
  * GITLET construction
  *<pre>
  * .gitlet
  *    ├── HEAD (file)       // Where is the head commit ref: refs/heads/master
- *    ├──index (file)       // Stage area. Serialized objects are saved into index file.
- *    ├── objects  (directory)   // hash table that contains SHA-1 of Serialized objects (blob, commit, ...)
+ *    ├── index (file)       // Stage area. Serialized objects are saved into index file.
+ *    ├── commits (file)    // Store the SHA-1 ID of all the commits.
+ *    ├── objects  (directory)   // hash table that contains SHA-1 of Serialized objects (blob, commit)
  *    ├──refs
  *       └── heads
  *              └── branches (file)  // SHA-1 of current commit that head pointer points to
@@ -42,12 +46,21 @@ public class Repository {
     public static final File HEAD = join(GITLET_DIR, "HEAD");
     /** The index file. */
     public static final File INDEX = join(GITLET_DIR, "index");
+    /** The file that contains all SHA-1 code of all commits. */
+    public static final File COMMITS = join(GITLET_DIR, "commits");
     /** The initial message. */
     public static final String INITIAL_MESSAGE = "initial commit";
     /** The name of initial branch*/
     public static final String INITIAL_BRANCH = "master";
     /** Default prefix for HEAD. */
     public static final String DEFAULT_HEAD_PREFIX = "ref: refs/heads/";
+
+    /** check whether it is initialized */
+    public static void isInitialized() {
+        if (!(GITLET_DIR.exists() && GITLET_DIR.isDirectory())) {
+            exit("Not in an initialized Gitlet directory.");
+        }
+    }
 
     /** init
      * Usage: java gitlet.Main init
@@ -119,65 +132,225 @@ public class Repository {
      * The staging area is cleared after a commit.
      */
     public static void commit(String message) {
-        Map<String, String> tracked = getStagingArea().stageCommit();
-        String parentID = readContentsAsString(getActiveBranchFile());
-        Commit newCommit = new Commit(message, parentID, tracked);
-        writeContents(getActiveBranchFile(), newCommit.sha1ID());
-    }
-
-    public void checkout() {
-
-    }
-
-    public void log() {
-
-    }
-
-
-
-    /** The methods below are private help method. */
-
-    /** initialize a null commit. */
-    private static void initializeCommit() {
-        Commit initialCommit = new Commit(INITIAL_MESSAGE, null, new HashMap<>());
-        activeBranch(INITIAL_BRANCH);
-        writeContents(createBranchFile(INITIAL_BRANCH), initialCommit.sha1ID());
+        StagingArea stageArea = getStagingArea();
+        if (stageArea.getStagedFiles().isEmpty() && stageArea.getRemovedFiles().isEmpty()) {
+            exit("No changes added to the commit.");
+        }
+        Map<String, String> tracked = getStagingArea().toCommit();
+        new Commit(message, getCurrentCommitID(), tracked);
     }
     /**
-     * Change HEAD file that points to the active branch.
-     * @param branchName String of the name of branch.
+     * log
+     * display information about each commit backwards along the commit tree.
+     * ===
+     * commit 3e8bf1d794ca2e9ef8a4007275acf3751c7170ff
+     * Date: Thu Nov 9 17:01:33 2017 -0800
+     * Another commit message.
+     *
+     * ===
+     * commit e881c9575d180a215d1a636545b8fd9abfb1d2bb
+     * Date: Wed Dec 31 16:00:00 1969 -0800
+     * initial commit
      * */
-    private static void activeBranch(String branchName) {
-        writeContents(HEAD, DEFAULT_HEAD_PREFIX + branchName);
+    public static void log() {
+        printLog(getCommit(getCurrentCommitID()));
+    }
+
+    /**
+     * global-log
+     * Like log, except displays information about all commits ever made.
+     * */
+    public static void globalLog() {
+       for (Commit commit: getAllCommits()) {
+           printOneLog(commit);
+       }
+    }
+
+    /**
+     * find
+     * Prints out the ids of all commits that have the given commit message.
+     * it prints the ids out on separate lines.
+     * If no such commit exists, prints the error message.
+     * */
+    public static void find(String message) {
+        boolean flag = true;
+        for (Commit commit: getAllCommits()) {
+            if (commit.getMessage().equals(message)) {
+                System.out.println(commit.getCommitID());
+                flag = false;
+            }
+        }
+        if (flag) {
+            exit("Found no commit with that message.");
+        }
+    }
+
+    /**
+     * status
+     * === Branches ===
+     * *master
+     * other-branch
+     *
+     * === Staged Files ===
+     * wug.txt
+     * wug2.txt
+     *
+     * === Removed Files ===
+     * goodbye.txt
+     *
+     * === Modifications Not Staged For Commit ===
+     * junk.txt (deleted)
+     * wug3.txt (modified)
+     *
+     * === Untracked Files ===
+     * random.stuff
+     * */
+
+    public static void status() {
+        printStatusFormat("Branches", getBranchNames());
+        printStatusFormat("Staged Files", getStagingArea().getStagedFiles());
+        printStatusFormat("Removed Files", getStagingArea().getRemovedFiles());
+        printStatusFormat("Modifications Not Staged For Commit", null);
+        printStatusFormat("Untracked Files", null);
+    }
+
+    /**
+     * gitlet.Main checkout -- [file name]
+     * checkout filename
+     * Takes the version of the file into working directory.
+     * The new version of the file is not staged.
+     * */
+    public static void checkout(String fileName) {
+        checkout(getCurrentCommitID(), fileName);
+    }
+
+    /**
+     * gitlet.Main checkout [commit id] -- [file name]
+     * Takes the version of the file as it exists in the commit with the given id,
+     * and puts it in the working directory,
+     * overwriting the version of the file that’s already there if there is one.
+     * The new version of the file is not staged.*/
+    public static void checkout(String commitID, String fileName) {
+        Map<String, String> tracked = getCommit(commitID).getFiles();
+        File file = getFileByName(fileName);
+        String filePath = file.getAbsolutePath();
+        if (tracked.containsKey(filePath)) {
+            Blob blob = readObject(objectFile(tracked.get(filePath)), Blob.class);
+            updateFileWithBlob(file, blob);
+            getStagingArea().unstage(filePath, blob.shaID());
+        } else {
+            exit("File does not exist in that commit.");
+        }
     }
     /**
-     * create a certain branch file.
-     * @param branchName String of the name of branch.
-     * @return File of branch pointer*/
-    private static File createBranchFile(String branchName) {
-        return join(HEADS_DIR, branchName);
+     * gitlet.Main checkout [branch name]
+     * Takes all files in the commit at the head of the given branch,
+     * and puts them in the working directory,
+     * overwriting the versions of the files that are already there if they exist.
+     * at the end of this command, the given branch will now be considered the current branch (HEAD).
+     * Any files that are tracked in the current branch but are not present in the checked-out branch are deleted.
+     * The staging area is cleared, unless the checked-out branch is the current branch.
+     * */
+    public static void checkoutBranch(String branchName) {
+        if (!branchExists(branchName)) {
+            exit("No such branch exists.");
+        }
+        if (getActiveBranchFile().getName().equals(branchName)) {
+            exit("No need to checkout the current branch.");
+        }
+
+        reset(getCommitIDByBranchName(branchName));
+        StagingArea stageArea = getStagingArea();
+        Commit commitGiven = getCommitByBranchName(branchName);
+        Map<String, String> trackedGiven = commitGiven.getFiles();
+        List<String> trackedCurrent =  stageArea.getTrackedFiles();
+        for (Map.Entry<String,String> entry: trackedGiven.entrySet()) {
+            String filePath = entry.getKey();
+            Blob blob = readObject(objectFile(entry.getValue()), Blob.class);
+            if (!trackedCurrent.contains(filePath)) {
+                if (getFileByAbsolutePath(filePath).length() != 0) {
+                    exit("There is an untracked file in the way; delete it, or add and commit it first.");
+                }
+            }
+            updateFileWithBlob(blob.getCurrentFile(), blob);
+            trackedCurrent.remove(filePath);
+        }
+        for (String filePath : trackedCurrent) {
+            restrictedDelete(filePath);
+        }
+        stageArea.updateAllTracked(trackedGiven);
+        activateBranch(branchName);
     }
-    /** Get active branch File.
-     * @return File of active branch.
+
+    /**
+     * branch
+     * Creates a new branch with the given name
+     * points it at the current head commit.
+     * A branch is nothing more than a name for a reference (a SHA-1 identifier) to a commit node.
+     *
      */
-    private static File getActiveBranchFile() {
-        String activeBranchFilePath = readContentsAsString(HEAD).split(":")[1].trim();
-        return join(GITLET_DIR, activeBranchFilePath);
-    }
-    /** Judge whether gitlet repository exist, and quit with a message if not. */
-    private static void gitletRepoExists() {
-        if (!GITLET_DIR.exists()) {
-            exit("Not yet initialize a Getlet Repository.");
+
+    public static void branch(String branchName) {
+        if (branchExists(branchName)) {
+            exit("A branch with that name already exists.");
         }
+        writeContents(createBranchFile(branchName), getCurrentCommitID());
     }
-    /** Judge whether the file exist, and quit with a message if not. */
-    private static void fileExists(File file) {
-        if (!file.exists()) {
-            exit("File does not exists. ");
+
+    /**
+     * rm-branch
+     * Deletes the branch with the given name.
+     * This only means to delete the pointer associated with the branch;
+     * it does not mean to delete all commits that were created under the branch,
+     * or anything like that.*/
+    public static void rmBranch(String branchName) {
+        if (!branchExists(branchName)) {
+            exit("A branch with that name does not exist.");
         }
+        if (branchName.equals(getActiveBranchFile().getName())) {
+            exit("Cannot remove the current branch.");
+        }
+        getBranchFile(branchName).delete();
+
     }
-    private static StagingArea getStagingArea() {
-        return readObject(INDEX, StagingArea.class);
+
+    /**
+     * Checks out all the files tracked by the given commit.
+     * Removes tracked files that are not present in that commit.
+     * Also moves the current branch’s head to that commit node.
+     * The staging area is cleared.
+     *
+     * If no commit with the given id exists, print No commit with that id exists.
+     *
+     * If a working file is untracked in the current branch and would be overwritten by the reset,
+     * print `There is an untracked file in the way; delete it, or add and commit it first.`
+     * perform this check before doing anything else.
+     *
+     * */
+    public static void reset(String commitID) {
+        StagingArea stageArea = getStagingArea();
+        Commit commitGiven = getCommit(commitID);
+        Map<String, String> trackedGiven = commitGiven.getFiles();
+        List<String> trackedCurrent =  stageArea.getTrackedFiles();
+        for (Map.Entry<String,String> entry: trackedGiven.entrySet()) {
+            String filePath = entry.getKey();
+            Blob blob = readObject(objectFile(entry.getValue()), Blob.class);
+            if (!trackedCurrent.contains(filePath)) {
+                if (getFileByAbsolutePath(filePath).length() != 0) {
+                    exit("There is an untracked file in the way; delete it, or add and commit it first.");
+                }
+            }
+            updateFileWithBlob(blob.getCurrentFile(), blob);
+            trackedCurrent.remove(filePath);
+        }
+        for (String filePath : trackedCurrent) {
+            restrictedDelete(filePath);
+        }
+        stageArea.updateAllTracked(trackedGiven);
+        activateBranch(branchName);
     }
+
+
+
 
 }

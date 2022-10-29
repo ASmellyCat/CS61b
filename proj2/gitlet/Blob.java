@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.util.*;
 
 import static gitlet.Utils.*;
-import static gitlet.MyUtils.*;
+import static gitlet.HelpMethod.*;
 
 /**Represents a blob object.
  * @author ASmellyCat
@@ -16,11 +16,13 @@ import static gitlet.MyUtils.*;
  */
 
 public class Blob implements Serializable {
+    /** the content of a file that converted into a blob.*/
     private final String fileContents;
+    /** the SHA-1 ID of a blob*/
     private final String fileID;
-
+    /** the absolute filepath of a blob. */
     private final String filePath;
-
+    /** the source file of a blob. */
     private final File currentFile;
     /**
      * Creates a blob object with the specified parameters.
@@ -44,7 +46,7 @@ public class Blob implements Serializable {
      * Get the contents of this file in string format.
      * @return String contents of this file, which converted into a blob.
      * */
-    public String contents() {
+    public String getFileContents() {
         return fileContents;
     }
 
@@ -56,14 +58,16 @@ public class Blob implements Serializable {
         return filePath;
     }
 
-    //????????/
+    /** save this blob. */
     public void save() {
         File objectFile = objectFile(fileID);
         saveObjectFile(objectFile, this);
     }
 
-
-
+    /** get blob source file. */
+    public File getCurrentFile() {
+        return currentFile;
+    }
     /** private HELP method. */
 
     /**
