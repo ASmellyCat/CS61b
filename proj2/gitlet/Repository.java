@@ -51,10 +51,6 @@ public class Repository {
      */
     public static final File HEADS_DIR = join(REFS_DIR, "heads");
     /**
-     * The remote heads directory.
-     */
-    public static final File ROMOTE_DIR = join(REFS_DIR, "remote");
-    /**
      * The HEAD file.
      */
     public static final File HEAD = join(GITLET_DIR, "HEAD");
@@ -108,7 +104,6 @@ public class Repository {
         OBJECT_DIR.mkdir();
         REFS_DIR.mkdir();
         HEADS_DIR.mkdir();
-        ROMOTE_DIR.mkdir();
         activateBranch(INITIAL_BRANCH);
         new Commit(INITIAL_MESSAGE, null, null, new HashMap<>());
         new StagingArea();
