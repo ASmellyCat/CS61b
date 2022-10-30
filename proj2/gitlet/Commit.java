@@ -5,8 +5,11 @@ import java.io.Serializable;
 
 import static gitlet.HelpMethod.*;
 import static gitlet.MyUtils.updateIntoFile;
+import static gitlet.Repository.CWD;
+import static gitlet.Repository.OBJECT_DIR;
 import static gitlet.Utils.*;
 
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -105,6 +108,30 @@ public class Commit implements Serializable {
     public Date getDate() {
         return date;
     }
+    /** save this commit to Object file directory. */
+    public void save() {
+        save(OBJECT_DIR);
+
+    }
+
+    public void save(File fileDir) {
+        File objectFile = objectFile(commitID, fileDir);
+        saveObjectFile(objectFile, this);
+    }
+
+
+    /** update the commit file path to current path. */
+    public void updatePath(File fileDir) {
+        Map<String, String> newMap = new HashMap<>();
+        for (String path : tracked.keySet()) {
+            String fileID = tracked.get(path);
+            newMap.put(join(fileDir.getParentFile(), join(path).getName()).getAbsolutePath(), fileID);
+        }
+        tracked.clear();
+        tracked.putAll(newMap);
+        save(join(fileDir, OBJECT_DIR.getName()));
+
+    }
 
     /**
      * Get the timestamp string like Thu Nov 9 20:00:05 2017 -0800
@@ -140,10 +167,5 @@ public class Commit implements Serializable {
      */
     private String generateCommitID() {
         return sha1(getTimestamp() + message +  parentID + tracked.toString());
-    }
-    /** save this commit to Object file directory. */
-    private void save() {
-        File objectFile = objectFile(commitID);
-        saveObjectFile(objectFile, this);
     }
 }

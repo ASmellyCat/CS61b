@@ -32,20 +32,26 @@ public class HelpMethod implements Serializable {
     }
     /** get commit from OBJECT file. */
     public static Commit getCommit(String id) {
+        return getCommit(id, OBJECT_DIR);
+    }
+    public static Commit getCommit(String id, File firDir) {
         if (id == null) {
             return null;
         }
-        File file = objectFile(id);
+        File file = objectFile(id, firDir);
         if (file.length() == 0) {
             exit("No commit with that id exists.");
         }
-        return readObject(objectFile(id), Commit.class);
+        return readObject(file, Commit.class);
     }
     /**
      * @param branchName String of a given branch name.
      * @return Commit of a given branch name. */
     public static String getCommitIDByBranchName(String branchName) {
-        File file = join(HEADS_DIR, branchName);
+        return getCommitIDByBranchName(correctBranchName(branchName), correctBranchDir(branchName));
+    }
+    public static String getCommitIDByBranchName(String branchName, File fileDir) {
+        File file = join(fileDir, branchName);
         return readContentsAsString(file);
     }
     /** get all commits and save it into a Set*/
@@ -57,16 +63,45 @@ public class HelpMethod implements Serializable {
     /** Using recursive method to get all the commits*/
     private static Set<Commit> getAllCommitsHelp(Set<Commit> commitsSet, String commitsID) {
         if (!commitsID.isEmpty()) {
-            commitsSet.add(getCommit(commitsID.substring(0, 40)));
+            commitsSet.add(getCommit(commitsID.substring(0, 40), OBJECT_DIR));
             return getAllCommitsHelp(commitsSet, commitsID.substring(40));
         }
         return commitsSet;
     }
+    /** get all parent commits of a given commit. */
+    public static Set<Commit> getAllParentCommits(String id) {
+        return getAllParentCommits(id, OBJECT_DIR);
+    }
+    public static Set<Commit> getAllParentCommits(String id, File fireDir) {
+        Commit commit = getCommit(id, fireDir);
+        Set<Commit> commitsSet = new HashSet<>();
+        while (commit.getParentID() != null) {
+            commitsSet.add(commit);
+            commit = getCommit(commit.getParentID(), fireDir);
+        }
+        commitsSet.add(commit);
+        return commitsSet;
+    }
+
+    public static Set<String> getAllParentCommitsID(String id) {
+        return getAllParentCommitsID(id, OBJECT_DIR);
+    }
+    public static Set<String> getAllParentCommitsID(String id, File fireDir) {
+        Commit commit = getCommit(id, fireDir);
+        Set<String> commitsSet = new HashSet<>();
+        while (commit.getParentID() != null) {
+            commitsSet.add(commit.getCommitID());
+            commit = getCommit(commit.getParentID(), fireDir);
+        }
+        commitsSet.add(commit.getCommitID());
+        return commitsSet;
+    }
+
     /** reset a commit files.
      * @param commitID String of a given commit SHA-1 ID */
     public static void resetACommit(String commitID) {
         StagingArea stageArea = getStagingArea();
-        Commit commitGiven = getCommit(commitID);
+        Commit commitGiven = getCommit(commitID, OBJECT_DIR);
         Map<String, String> trackedGiven = commitGiven.getFiles();
         List<String> trackedCurrent =  stageArea.getTrackedFiles();
         for (Map.Entry<String, String> entry: trackedGiven.entrySet()) {
@@ -99,7 +134,7 @@ public class HelpMethod implements Serializable {
         while (!commitsQueue.isEmpty()) {
             Commit latestCommit = commitsQueue.poll();
             String parentID = latestCommit.getParentID();
-            Commit parentCommit = getCommit(parentID);
+            Commit parentCommit = getCommit(parentID, OBJECT_DIR);
             if (checkedCommitIDs.contains(commitSmaller.getCommitID())) {
                 return commitSmaller;
             }
@@ -109,7 +144,7 @@ public class HelpMethod implements Serializable {
             commitsQueue.add(parentCommit);
             checkedCommitIDs.add(parentID);
             String secondParentID = latestCommit.getSecondParentID();
-            Commit secondParentCommit = getCommit(secondParentID);
+            Commit secondParentCommit = getCommit(secondParentID, OBJECT_DIR);
             if (secondParentID != null) {
                 if (checkedCommitIDs.contains(secondParentID)) {
                     return secondParentCommit;
@@ -135,12 +170,10 @@ public class HelpMethod implements Serializable {
     /**
      * to merge by comparing files in HEAD Commit, other Commit and Split Commit.
      * */
-    public static boolean toMerge(Commit splitCommit, Commit headCommit, Commit otherCommit) {
+    public static boolean toMerge(Map<String, String> splitTracked,
+                                  Map<String, String> headTracked,
+                                  Map<String, String> otherTracked) {
         boolean flag = false;
-        StagingArea stageArea = getStagingArea();
-        Map<String, String> splitTracked = splitCommit.getFiles();
-        Map<String, String> headTracked = headCommit.getFiles();
-        Map<String, String> otherTracked = otherCommit.getFiles();
         Set<String> allFilePath = new HashSet<>();
         allFilePath.addAll(splitTracked.keySet());
         allFilePath.addAll(headTracked.keySet());
@@ -149,7 +182,7 @@ public class HelpMethod implements Serializable {
             String splitID = splitTracked.get(filePath);
             String headID = headTracked.get(filePath);
             String otherID = otherTracked.get(filePath);
-            Integer action = check(splitID, headID, otherID);
+            int action = check(splitID, headID, otherID);
             //System.out.println(action.toString());
             if (action == 1) { //Overwrite without alert because head is not empty.
                 overwriteMerge(filePath, otherTracked, action);
@@ -251,22 +284,34 @@ public class HelpMethod implements Serializable {
      * @param branchName String of the name of branch.
      * */
     public static void activateBranch(String branchName) {
-        writeContents(HEAD, DEFAULT_HEAD_PREFIX + branchName);
+        writeContents(HEAD, "ref: "
+                + join(correctBranchDir(branchName),
+                correctBranchName(branchName)).getAbsolutePath());
     }
+
 
     /**
      * create a certain branch file.
      * @param branchName String of the name of branch.
      * @return File of branch pointer*/
     public static File createBranchFile(String branchName) {
-        return join(HEADS_DIR, branchName);
+        return createBranchFile(branchName, HEADS_DIR);
+    }
+    public static File createBranchFile(String branchName, File fileDir) {
+        return join(fileDir, branchName);
     }
     /** Get active branch File.
      * @return File of active branch.
      */
     public static File getActiveBranchFile() {
         String activeBranchFilePath = readContentsAsString(HEAD).split(": ")[1].trim();
-        return join(GITLET_DIR, activeBranchFilePath);
+        return join(activeBranchFilePath);
+    }
+
+    /** check if the current active branch is the same as given branch. */
+    public static boolean ifActiveBranch(String branchName) {
+        return getActiveBranchFile().getAbsolutePath().equals(join(correctBranchDir(branchName),
+                correctBranchName(branchName)).getAbsolutePath());
     }
 
     /**
@@ -275,18 +320,40 @@ public class HelpMethod implements Serializable {
      * @return File of the branch file in heads provided a branch name.
      * */
     public static File getBranchFile(String branchName) {
-        return join(HEADS_DIR, branchName);
+        return getBranchFile(branchName, HEADS_DIR);
+    }
+    public static File getBranchFile(String branchName, File fileDir) {
+        return join(fileDir, branchName);
     }
 
     /** @return boolean of whether a branch has created. */
     public static boolean branchExists(String branchName) {
-        List<String> branchNames = plainFilenamesIn(HEADS_DIR);
+        return branchExists(branchName, HEADS_DIR);
+    }
+    public static boolean branchExists(String branchName, File fileDir) {
+        List<String> branchNames = new ArrayList<>(plainFilenamesIn(fileDir));
         if (!(branchNames.isEmpty())) {
             return branchNames.contains(branchName);
         }
         return false;
     }
 
+    /** find the correct branch file directory. */
+    public static File correctBranchDir(String branchName) {
+        if (branchName.contains("/")) {
+            String remoteName = branchName.split("/")[0];
+            return join(REMOTE_DIR, remoteName);
+        }
+        return HEADS_DIR;
+    }
+
+    /**find the correct branch name. */
+    public static String correctBranchName(String branchName) {
+        if (branchName.contains("/")) {
+            return branchName.split("/")[1];
+        }
+        return branchName;
+    }
     /** Using recursive method to print log. */
     public static void printLog(Commit commit) {
         if (commit != null) {
@@ -305,12 +372,16 @@ public class HelpMethod implements Serializable {
 
     /** get the branch names in a list. */
     public static List<String> getBranchNames() {
-        List<String> branchNames = new ArrayList<>(plainFilenamesIn(HEADS_DIR));
+        return getBranchNames(HEADS_DIR);
+    }
+    public static List<String> getBranchNames(File fileDir) {
+        List<String> branchNames = new ArrayList<>(plainFilenamesIn(fileDir));
         String activaBranchName = getActiveBranchFile().getName();
         branchNames.add(0, "*" + activaBranchName);
         branchNames.remove(activaBranchName);
         return branchNames;
     }
+
 
     /** the format to print status. */
     public static void printStatusFormat(String outline, List<String> names) {
@@ -334,10 +405,22 @@ public class HelpMethod implements Serializable {
     }
 
     /**
+     * get Staging Area instance from file ".gitlet/index".
+     * @return StagingArea instance.
+     */
+    public static Remote getRmote() {
+        return readObject(REMOTE, Remote.class);
+    }
+
+    /**
      * get blob given a SHA-1 ID.
      * */
     public static Blob getBlob(String blobID) {
-        return readObject(objectFile(blobID), Blob.class);
+        return getBlob(blobID, OBJECT_DIR);
+    }
+
+    public static Blob getBlob(String blobID, File fireDir) {
+        return readObject(objectFile(blobID, fireDir), Blob.class);
     }
 
 
@@ -355,7 +438,10 @@ public class HelpMethod implements Serializable {
     }
     /** get the temp object file stored in OBJECT_FILE. */
     public static File objectFile(String id) {
-        File fileDir = join(OBJECT_DIR, id.substring(0, 2));
+        return objectFile(id, OBJECT_DIR);
+    }
+    public static File objectFile(String id, File objectDir) {
+        File fileDir = join(objectDir, id.substring(0, 2));
         if (!fileDir.exists()) {
             fileDir.mkdir();
         }
@@ -380,7 +466,7 @@ public class HelpMethod implements Serializable {
      * @return String of fileName in full SHA-1 ID.
      * */
     public static String shortCommitIDFind(File fileDir, String id) {
-        List<String> fileNames = plainFilenamesIn(fileDir);
+        List<String> fileNames = new ArrayList<>(plainFilenamesIn(fileDir));
         for (String fileName : fileNames) {
             if (id.equals(fileName.substring(0, 4))) {
                 return fileName;
@@ -406,9 +492,8 @@ public class HelpMethod implements Serializable {
         String text5 = ">>>>>>>" + '\n';
         writeContents(join(filePath), text1 + text2 + text3 + text4 + text5);
 
-
-
     }
+
 }
 
 

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
+import static gitlet.Repository.CWD;
+import static gitlet.Repository.OBJECT_DIR;
 import static gitlet.Utils.*;
 import static gitlet.HelpMethod.*;
 
@@ -21,7 +23,7 @@ public class Blob implements Serializable {
     /** the SHA-1 ID of a blob. */
     private final String fileID;
     /** the absolute filepath of a blob. */
-    private final String filePath;
+    private String filePath;
     /** the source file of a blob. */
     private final File currentFile;
     /**
@@ -60,8 +62,21 @@ public class Blob implements Serializable {
 
     /** save this blob. */
     public void save() {
-        File objectFile = objectFile(fileID);
+        save(OBJECT_DIR);
+    }
+    public void save(File fileDir) {
+        File objectFile = objectFile(fileID, fileDir);
         saveObjectFile(objectFile, this);
+    }
+
+    public void updatePath() {
+        filePath = join(CWD, currentFile.getName()).getAbsolutePath();
+        save();
+    }
+
+    public void updatePath(File fileDir) {
+        filePath = join(fileDir.getParentFile(), currentFile.getName()).getAbsolutePath();
+        save(join(fileDir, OBJECT_DIR.getName()));
     }
 
     /** get blob source file. */

@@ -17,7 +17,8 @@ public class Main {
         String commitID;
         String branchName;
         String remoteName;
-        String localName;
+        String remoteAdress;
+        String remoteBranchName;
         if (args.length == 0) {
             exit("Please enter a command.");
         }
@@ -116,6 +117,41 @@ public class Main {
                 validateNumArgs("merge", args, 2);
                 branchName = args[1];
                 Repository.merge(branchName);
+                break;
+            case "add-remote": // Usage: java gitlet.Main add-remote [remote name]
+                // [name of remote directory]/.gitlet
+                Repository.isInitialized();
+                validateNumArgs("add-remote", args, 3);
+                remoteName = args[1];
+                remoteAdress = args[2];
+                Repository.addRemote(remoteName, remoteAdress);
+                break;
+            case "rm-remote": // Usage: java gitlet.Main rm-remote [remote name]
+                Repository.isInitialized();
+                validateNumArgs("rm-remote", args, 2);
+                branchName = args[1];
+                Repository.removeRemote(branchName);
+                break;
+            case "fetch": // Usage: java gitlet.Main fetch [remote name] [remote branch name]
+                Repository.isInitialized();
+                validateNumArgs("fetch", args, 3);
+                remoteName = args[1];
+                remoteBranchName = args[2];
+                Repository.fetch(remoteName, remoteBranchName);
+                break;
+            case "push": // Usage: java gitlet.Main push [remote name] [remote branch name]
+                Repository.isInitialized();
+                validateNumArgs("push", args, 3);
+                remoteName = args[1];
+                remoteBranchName = args[2];
+                Repository.push(remoteName, remoteBranchName);
+                break;
+            case "pull": // Usage: java gitlet.Main pull [remote name] [remote branch name]
+                Repository.isInitialized();
+                validateNumArgs("pull", args, 3);
+                remoteName = args[1];
+                remoteBranchName = args[2];
+                Repository.pull(remoteName, remoteBranchName);
                 break;
             default:
                 exit("No command with that name exists.");

@@ -51,6 +51,10 @@ public class Repository {
      */
     public static final File HEADS_DIR = join(REFS_DIR, "heads");
     /**
+     * The local heads directory.
+     */
+    public static final File REMOTE_DIR = join(REFS_DIR, "remote");
+    /**
      * The HEAD file.
      */
     public static final File HEAD = join(GITLET_DIR, "HEAD");
@@ -63,6 +67,10 @@ public class Repository {
      */
     public static final File COMMITS = join(GITLET_DIR, "commits");
     /**
+     * remote address file.
+     * */
+    public static final File REMOTE = join(GITLET_DIR, "REMOTE");
+    /**
      * The initial message.
      */
     public static final String INITIAL_MESSAGE = "initial commit";
@@ -70,10 +78,6 @@ public class Repository {
      * The name of initial branch
      */
     public static final String INITIAL_BRANCH = "master";
-    /**
-     * Default prefix for HEAD.
-     */
-    public static final String DEFAULT_HEAD_PREFIX = "ref: refs/heads/";
 
     /**
      * check whether it is initialized
@@ -104,9 +108,11 @@ public class Repository {
         OBJECT_DIR.mkdir();
         REFS_DIR.mkdir();
         HEADS_DIR.mkdir();
+        REMOTE_DIR.mkdir();
         activateBranch(INITIAL_BRANCH);
         new Commit(INITIAL_MESSAGE, null, null, new HashMap<>());
         new StagingArea();
+        new Remote();
 
     }
 
@@ -290,12 +296,13 @@ public class Repository {
      * The staging area is cleared, unless the checked-out branch is the current branch.
      */
     public static void checkoutBranch(String branchName) {
-        if (!branchExists(branchName)) {
+        if (!branchExists(correctBranchName(branchName), correctBranchDir(branchName))) {
             exit("No such branch exists.");
         }
-        if (getActiveBranchFile().getName().equals(branchName)) {
+        if (ifActiveBranch(branchName)) {
             exit("No need to checkout the current branch.");
         }
+
 
         resetACommit(getCommitIDByBranchName(branchName));
         activateBranch(branchName);
@@ -387,11 +394,12 @@ public class Repository {
      * (called the first parent)
      * and the head of the branch given on the command line to be merged in.
      */
+
     public static void merge(String branchName) {
-        if (!branchExists(branchName)) {
+        if (!branchExists(correctBranchName(branchName), correctBranchDir(branchName))) {
             exit("A branch with that name does not exist.");
         }
-        if (branchName.equals(getActiveBranchFile().getName())) {
+        if (ifActiveBranch(branchName)) {
             exit("Cannot merge a branch with itself.");
         }
         if (!getStagingArea().noStaged()) {
@@ -409,7 +417,11 @@ public class Repository {
         } else if (splitID.equals(otherID)) {
             System.out.println("Given branch is an ancestor of the current branch.");
         } else {
-            boolean isConflict = toMerge(splitCommit, headCommit, otherCommit);
+            Map<String, String> splitTracked = splitCommit.getFiles();
+            Map<String, String> headTracked = headCommit.getFiles();
+            Map<String, String> otherTracked = otherCommit.getFiles();
+            boolean isConflict = toMerge(splitTracked, headTracked, otherTracked);
+            //boolean isConflict = toMerge(splitCommit, headCommit, otherCommit);
             commit("Merged " + branchName + " into " + getActiveBranchFile().getName()
                     + ".", otherCommit.getCommitID());
             if (isConflict) {
@@ -417,5 +429,46 @@ public class Repository {
             }
 
         }
+    }
+    /**
+     * add-remote
+     * Saves the given login information under the given remote name.
+     * */
+    public static void addRemote(String remoteName, String remoteAdress) {
+        getRmote().add(remoteName, remoteAdress);
+    }
+
+    /**
+     * rm-remote
+     * Remove information associated with the given remote name.
+     * */
+    public static void removeRemote(String remoteName) {
+        getRmote().remove(remoteName);
+    }
+
+    /**
+     * fetch
+     * Brings down commits from the remote Gitlet repository into the local Gitlet repository.
+     * */
+    public static void fetch(String remoteName, String remoteBranchName) {
+        getRmote().fetch(remoteName, remoteBranchName);
+    }
+
+    /**
+     * push
+     * Attempts to append the current branch’s commits to
+     * the end of the given branch at the given remote.
+     * */
+    public static void push(String remoteName, String remoteBranchName) {
+        getRmote().push(remoteName, remoteBranchName);
+    }
+    /**
+     * pull
+     * Fetches branch [remote name]/[remote branch name] as for the fetch command,
+     * and then merges that fetch into the current branch.
+     * */
+    public static void pull(String remoteName, String remoteBranchName) {
+        fetch(remoteName, remoteBranchName);
+        merge(remoteName + "/" + remoteBranchName);
     }
 }
