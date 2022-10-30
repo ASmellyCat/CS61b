@@ -39,4 +39,13 @@ Classes and Data Structures
 * removed - Set of removed files with file path as key.
 * tracked - Create a Staging object with specified parameters.
 
+### Help Method 
+* To simplify the code in repository. 
+#### Classification of methods
+* commits related 
+* branch related 
+* file write, read and log print. 
 
+
+### Algorithm
+* Using priority queue to assort and pop out commits, with the order of date.

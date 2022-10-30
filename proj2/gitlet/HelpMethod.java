@@ -74,8 +74,8 @@ public class HelpMethod implements Serializable {
             Blob blob = getBlob(entry.getValue());
             if (!trackedCurrent.contains(filePath)) {
                 if (join(filePath).length() != 0) {
-                    exit("There is an untracked file in the way; delete it, " +
-                            "or add and commit it first.");
+                    exit("There is an untracked file in the way; delete it, "
+                            + "or add and commit it first.");
                 }
             }
             updateFileWithBlob(filePath, blob);
@@ -97,7 +97,7 @@ public class HelpMethod implements Serializable {
         Set<String> checkedCommitIDs = new HashSet<>();
         Commit commitSmaller = smallerCommit(headCommit, otherCommit);
         while (!commitsQueue.isEmpty()) {
-            Commit latestCommit = commitsQueue.poll();;
+            Commit latestCommit = commitsQueue.poll();
             String parentID = latestCommit.getParentID();
             Commit parentCommit = getCommit(parentID);
             if (checkedCommitIDs.contains(commitSmaller.getCommitID())) {
@@ -182,7 +182,7 @@ public class HelpMethod implements Serializable {
             } else if (otherID != null && !otherID.equals(headID)) {
                 if (!otherID.equals(splitID) && headID == null) {
                     return 6; // ConflictMerge with one empty files. HEAD empty.
-                } else if (headID != null & ! otherID.equals(splitID)) {
+                } else if (headID != null & !otherID.equals(splitID)) {
                     return 4; // ConflictMerge with two files.
                 }
             } else if (otherID == null && headID != null) {
@@ -225,8 +225,12 @@ public class HelpMethod implements Serializable {
         return true;
     }
 
-    /** Overwrite without alert because head is not empty. Check if there need to appear an alarm. */
-    public static void overwriteMerge(String filePath, Map<String, String> otherMap, Integer action) {
+    /**
+     * Overwrite without alert because head is not empty.
+     * Check if there need to appear an alarm.
+     * */
+    public static void overwriteMerge(String filePath, Map<String, String> otherMap,
+                                      Integer action) {
         Blob otherBlob = getBlob(otherMap.get(filePath));
         if (action == 3 && getFileByName(filePath).length() != 0) {
             exit("There is an untracked file in the way; delete it, or add and commit it first.");

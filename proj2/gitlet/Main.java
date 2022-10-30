@@ -16,6 +16,8 @@ public class Main {
         String message;
         String commitID;
         String branchName;
+        String remoteName;
+        String localName;
         if (args.length == 0) {
             exit("Please enter a command.");
         }

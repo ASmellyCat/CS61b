@@ -61,7 +61,7 @@ public class Commit implements Serializable {
      * @param p String of the parent SHA-1 ID of this new commit.
      * @param t ArrayList<String> the files SHA-1 IDs it points to.
      */
-    public Commit(String m, String p, String p2,Map<String, String> t) {
+    public Commit(String m, String p, String p2, Map<String, String> t) {
         message = m;
         parentID = p;
         secondParentID = p2;
