@@ -15,7 +15,7 @@ import static gitlet.HelpMethod.*;
  *    ├── HEAD (file)       // Where is the head commit ref: refs/heads/master
  *    ├── index (file)       // Stage area. Serialized objects are saved into index file.
  *    ├── commits (file)    // Store the SHA-1 ID of all the commits.
- *    ├── objects  (directory)   // hash table that contains SHA-1 of Serialized objects (blob, commit)
+ *    ├── objects  (directory)   // hashtable with SHA-1 of Serialized objects (blob, commit)
  *    ├──refs
  *       └── heads
  *              └── branches (file)  // SHA-1 of current commit that head pointer points to
@@ -115,11 +115,14 @@ public class Repository {
      * add
      *
      * @param fileName String of the name of file that need to be added.
-     *                 Description: Adds a copy of the file as it currently exists to the staging area.
+     *                 Description: Adds a copy of the file as it currently
+     *                 exists to the staging area.
      *                 1. Overwrite the previous entry in staging area.
      *                 2. There is a staging area in .getlet directory.
-     *                 3. Remove the file which is identical to current commit in the staging areas.
-     *                 4. The file will no longer be staged for removal, if it was at the time of the command.
+     *                 3. Remove the file which is identical to current
+     *                 commit in the staging areas.
+     *                 4. The file will no longer be staged for removal,
+     *                 if it was at the time of the command.
      *                 5. runtime should be lgN.
      */
     public static void add(String fileName) {
@@ -133,9 +136,12 @@ public class Repository {
      *
      * @param fileName String of name of file that need to be removed.
      *                 1. Unstage the file if it is currently staged for addition.
-     *                 2. If the file is tracked in the current commit, stage it for removal.
-     *                 3. remove the file from the working directory if the user has not already done so.
-     *                 4. If the file is neither staged nor tracked by the head commit, print the error message.
+     *                 2. If the file is tracked in the current commit,
+     *                 stage it for removal.
+     *                 3. remove the file from the working directory
+     *                 if the user has not already done so.
+     *                 4. If the file is neither staged nor tracked by the head commit,
+     *                 print the error message.
      */
     public static void removal(String fileName) {
         gitletRepoExists();
@@ -238,7 +244,8 @@ public class Repository {
         printStatusFormat("Branches", getBranchNames());
         printStatusFormat("Staged Files", stageArea.getStagedFiles());
         printStatusFormat("Removed Files", stageArea.getRemovedFiles());
-        printStatusFormat("Modifications Not Staged For Commit", stageArea.getModifiedFilesButNotStaged());
+        printStatusFormat("Modifications Not Staged For Commit",
+                stageArea.getModifiedFilesButNotStaged());
         printStatusFormat("Untracked Files", stageArea.getUntrackedFiles());
     }
 
@@ -276,8 +283,10 @@ public class Repository {
      * Takes all files in the commit at the head of the given branch,
      * and puts them in the working directory,
      * overwriting the versions of the files that are already there if they exist.
-     * at the end of this command, the given branch will now be considered the current branch (HEAD).
-     * Any files that are tracked in the current branch but are not present in the checked-out branch are deleted.
+     * at the end of this command,
+     * the given branch will now be considered the current branch (HEAD).
+     * Any files that are tracked in the current branch
+     * but are not present in the checked-out branch are deleted.
      * The staging area is cleared, unless the checked-out branch is the current branch.
      */
     public static void checkoutBranch(String branchName) {
@@ -296,7 +305,8 @@ public class Repository {
      * branch
      * Creates a new branch with the given name
      * points it at the current head commit.
-     * A branch is nothing more than a name for a reference (a SHA-1 identifier) to a commit node.
+     * A branch is nothing more than a name
+     * for a reference (a SHA-1 identifier) to a commit node.
      */
 
     public static void branch(String branchName) {
@@ -332,8 +342,10 @@ public class Repository {
      * <p>
      * If no commit with the given id exists, print No commit with that id exists.
      * <p>
-     * If a working file is untracked in the current branch and would be overwritten by the reset,
-     * print `There is an untracked file in the way; delete it, or add and commit it first.`
+     * If a working file is untracked in the current branch
+     * and would be overwritten by the reset,
+     * print `There is an untracked file in the way; delete it,
+     * or add and commit it first.`
      * perform this check before doing anything else.
      */
     public static void reset(String commitID) {
@@ -344,13 +356,17 @@ public class Repository {
     /**
      * merge
      * 1. find the latest common ancestor.
-     * 2. if the split point is the current branch,then the effect is to check out the given branch.
+     * 2. if the split point is the current branch,
+     * then the effect is to check out the given branch.
      * 3. Any files that have been modified in the given branch since the split point,
-     * but not changed in the current branch should be changed to their versions in the given branch.
-     * 4. Any files that have been modified in the current branch but not in the given branch since the split point
+     * but not changed in the current branch should be
+     * changed to their versions in the given branch.
+     * 4. Any files that have been modified in the current branch
+     * but not in the given branch since the split point
      * should stay as they are.
      * 5. if both changed in the same way, left unchanged.
-     * if a file is both removed, but same name presents, leave it continue to be absent.
+     * if a file is both removed, but same name presents, l
+     * eave it continue to be absent.
      * 6. if no file in split point but only present in current branch, keep.
      * 7. Any files that were not present at the split point
      * and are present only in the given branch should be checked out and staged.
@@ -367,7 +383,8 @@ public class Repository {
      * Merged [given branch name] into [current branch name].
      * <p>
      * Merge commits differ from other commits:
-     * they record as parents both the head of the current branch (called the first parent)
+     * they record as parents both the head of the current branch
+     * (called the first parent)
      * and the head of the branch given on the command line to be merged in.
      */
     public static void merge(String branchName) {

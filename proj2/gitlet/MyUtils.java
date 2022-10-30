@@ -3,12 +3,11 @@ package gitlet;
 /** Additional utilities.
  *  @author ASmellyCat
  */
-import static gitlet.Repository.CWD;
 import static gitlet.Utils.*;
 import java.io.File;
 import java.io.Serializable;
 
-public class MyUtils implements Serializable{
+public class MyUtils implements Serializable {
     public static void exit(String message) {
         if (message != null && !message.equals("")) {
             System.out.println(message);
@@ -24,8 +23,8 @@ public class MyUtils implements Serializable{
     }
 
     /** get File by short name*/
-    public static File getFileByName(String Name) {
-        return join(absolutePath(Name));
+    public static File getFileByName(String name) {
+        return join(absolutePath(name));
     }
 
     /**convert absolute file name to relative file name. */

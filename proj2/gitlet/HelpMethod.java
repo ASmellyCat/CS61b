@@ -15,7 +15,7 @@ import static gitlet.MyUtils.*;
  * @author ASmellyCat
  * */
 
-public class HelpMethod implements Serializable{
+public class HelpMethod implements Serializable {
 
     /** Judge whether gitlet repository exist, and quit with a message if not. */
     public static void gitletRepoExists() {
@@ -69,12 +69,13 @@ public class HelpMethod implements Serializable{
         Commit commitGiven = getCommit(commitID);
         Map<String, String> trackedGiven = commitGiven.getFiles();
         List<String> trackedCurrent =  stageArea.getTrackedFiles();
-        for (Map.Entry<String,String> entry: trackedGiven.entrySet()) {
+        for (Map.Entry<String, String> entry: trackedGiven.entrySet()) {
             String filePath = entry.getKey();
             Blob blob = getBlob(entry.getValue());
             if (!trackedCurrent.contains(filePath)) {
                 if (join(filePath).length() != 0) {
-                    exit("There is an untracked file in the way; delete it, or add and commit it first.");
+                    exit("There is an untracked file in the way; delete it, " +
+                            "or add and commit it first.");
                 }
             }
             updateFileWithBlob(filePath, blob);
@@ -95,7 +96,7 @@ public class HelpMethod implements Serializable{
         commitsQueue.add(otherCommit);
         Set<String> checkedCommitIDs = new HashSet<>();
         Commit commitSmaller = smallerCommit(headCommit, otherCommit);
-        while (true) {
+        while (!commitsQueue.isEmpty()) {
             Commit latestCommit = commitsQueue.poll();;
             String parentID = latestCommit.getParentID();
             Commit parentCommit = getCommit(parentID);
@@ -110,15 +111,19 @@ public class HelpMethod implements Serializable{
             String secondParentID = latestCommit.getSecondParentID();
             Commit secondParentCommit = getCommit(secondParentID);
             if (secondParentID != null) {
-                if (checkedCommitIDs.contains(secondParentCommit)){
+                if (checkedCommitIDs.contains(secondParentID)) {
                     return secondParentCommit;
                 }
                 commitsQueue.add(secondParentCommit);
                 checkedCommitIDs.add(secondParentID);
             }
         }
+        return null;
     }
 
+    /**
+     * Compare two commit.
+     * @return Commit of smaller one. */
     public static Commit smallerCommit(Commit a, Commit b) {
         Comparator<Commit> commitComparator = Comparator.comparing(Commit::getDate);
         if (commitComparator.compare(a, b) < 0) {
@@ -144,11 +149,6 @@ public class HelpMethod implements Serializable{
             String splitID = splitTracked.get(filePath);
             String headID = headTracked.get(filePath);
             String otherID = otherTracked.get(filePath);
-            //System.out.println(filePath);
-            //System.out.println(splitID);
-            //System.out.println(headID);
-            //System.out.println(otherID);
-
             Integer action = check(splitID, headID, otherID);
             //System.out.println(action.toString());
             if (action == 1) { //Overwrite without alert because head is not empty.
@@ -168,6 +168,9 @@ public class HelpMethod implements Serializable{
         return flag;
     }
 
+    /** check which situation need to be handled.
+     * @return Integer indicates different situations.
+     * */
     public static int check(String splitID, String headID, String otherID) {
         if (splitID != null) {
             if (splitID.equals(headID)) {
@@ -179,7 +182,7 @@ public class HelpMethod implements Serializable{
             } else if (otherID != null && !otherID.equals(headID)) {
                 if (!otherID.equals(splitID) && headID == null) {
                     return 6; // ConflictMerge with one empty files. HEAD empty.
-                } else if (headID != null & ! otherID.equals(splitID)){
+                } else if (headID != null & ! otherID.equals(splitID)) {
                     return 4; // ConflictMerge with two files.
                 }
             } else if (otherID == null && headID != null) {
@@ -195,14 +198,18 @@ public class HelpMethod implements Serializable{
         return 0; // otherwise no change need to be added into HEAD.
     }
 
-    public static boolean conflictMerge(String filePath, Map<String, String> headMap, Map<String, String> otherMap) {
+    /** Conflict. Add existing other content into existing head. */
+    public static boolean conflictMerge(String filePath, Map<String, String> headMap,
+                                        Map<String, String> otherMap) {
         Blob otherBlob = getBlob(otherMap.get(filePath));
         Blob headBlob = getBlob(headMap.get(filePath));
-        updatedFileMerged(filePath, headBlob.getFileContents().toString(), otherBlob.getFileContents().toString());
+        updatedFileMerged(filePath, headBlob.getFileContents().toString(),
+                otherBlob.getFileContents().toString());
         getStagingArea().add(join(filePath));
         return true;
     }
 
+    /** Conflict. Add empty other content into existing head. */
     public static boolean conflictOtherEmpty(String filePath, Map<String, String> headMap) {
         Blob headBlob = getBlob(headMap.get(filePath));
         updatedFileMerged(filePath, headBlob.getFileContents().toString(), "");
@@ -210,13 +217,15 @@ public class HelpMethod implements Serializable{
         return true;
     }
 
+    /** Conflict. Add existing other content into empty head. */
     public static boolean conflictHeadEmpty(String filePath, Map<String, String> otherMap) {
         Blob headBlob = getBlob(otherMap.get(filePath));
-        updatedFileMerged(filePath,"", headBlob.getFileContents().toString());
+        updatedFileMerged(filePath, "", headBlob.getFileContents().toString());
         getStagingArea().add(join(filePath));
         return true;
     }
 
+    /** Overwrite without alert because head is not empty. Check if there need to appear an alarm. */
     public static void overwriteMerge(String filePath, Map<String, String> otherMap, Integer action) {
         Blob otherBlob = getBlob(otherMap.get(filePath));
         if (action == 3 && getFileByName(filePath).length() != 0) {
@@ -226,6 +235,7 @@ public class HelpMethod implements Serializable{
         getStagingArea().add(join(filePath));
     }
 
+    /** Remove file from HEAD. */
     public static void removeMerge(String filePath) {
         restrictedDelete(filePath);
         getStagingArea().remove(filePath);
@@ -293,7 +303,7 @@ public class HelpMethod implements Serializable{
     public static List<String> getBranchNames() {
         List<String> branchNames = new ArrayList<>(plainFilenamesIn(HEADS_DIR));
         String activaBranchName = getActiveBranchFile().getName();
-        branchNames.add(0,"*" + activaBranchName);
+        branchNames.add(0, "*" + activaBranchName);
         branchNames.remove(activaBranchName);
         return branchNames;
     }
@@ -304,7 +314,7 @@ public class HelpMethod implements Serializable{
         System.out.print(outline);
         System.out.println(" ===");
         if (names != null) {
-            names.forEach(any ->{
+            names.forEach(any -> {
                 System.out.println(getRelativeFileName(any));
             });
         }
@@ -368,7 +378,7 @@ public class HelpMethod implements Serializable{
     public static String shortCommitIDFind(File fileDir, String id) {
         List<String> fileNames = plainFilenamesIn(fileDir);
         for (String fileName : fileNames) {
-            if (id.equals(fileName.substring(0,4))) {
+            if (id.equals(fileName.substring(0, 4))) {
                 return fileName;
             }
         }
@@ -383,6 +393,7 @@ public class HelpMethod implements Serializable{
         writeContents(join(filePath), blob.getFileContents());
     }
 
+    /** Rewrite merged new file, containing both contents from HEAD and given commit. */
     public static void updatedFileMerged(String filePath, String head, String given) {
         String text1 = "<<<<<<< HEAD" + "\n";
         String text2 = head;

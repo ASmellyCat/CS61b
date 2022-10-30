@@ -65,7 +65,7 @@ public class StagingArea implements Serializable {
      */
     public boolean remove(String filePath) {
         filePath = absolutePath(filePath);
-        boolean flag = false;;
+        boolean flag = false;
         if (isAdded(filePath)) {
             added.remove(filePath);
             flag = true;
@@ -143,7 +143,8 @@ public class StagingArea implements Serializable {
      * Tracked in the current commit, changed in the working directory, but not staged;
      * Staged for addition, but with different contents than in the working directory;
      * Staged for addition, but deleted in the working directory;
-     * Not staged for removal, but tracked in the current commit and deleted from the working directory.
+     * Not staged for removal, but tracked in the current commit
+     * and deleted from the working directory.
      * */
     public List<String> getModifiedFilesButNotStaged() {
         List<String> returnFileNames = new ArrayList<>();
@@ -174,8 +175,10 @@ public class StagingArea implements Serializable {
     }
 
     /** files present in the working directory but neither staged for addition nor tracked.
-     * This includes files that have been staged for removal, but then re-created without Gitlet’s knowledge.
-     * Ignore any subdirectories that may have been introduced, since Gitlet does not deal with them. */
+     * This includes files that have been staged for removal,
+     * but then re-created without Gitlet’s knowledge.
+     * Ignore any subdirectories that may have been introduced,
+     * since Gitlet does not deal with them. */
     public List<String> getUntrackedFiles() {
         List<String> returnFileNames = new ArrayList<>();
         List<String> fileNames = new ArrayList<>(plainFilenamesIn(Repository.CWD));
