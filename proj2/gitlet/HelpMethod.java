@@ -94,16 +94,37 @@ public class HelpMethod implements Serializable{
         commitsQueue.add(headCommit);
         commitsQueue.add(otherCommit);
         Set<String> checkedCommitIDs = new HashSet<>();
+        Commit commitSmaller = smallerCommit(headCommit, otherCommit);
         while (true) {
             Commit latestCommit = commitsQueue.poll();;
             String parentID = latestCommit.getParentID();
             Commit parentCommit = getCommit(parentID);
+            if (checkedCommitIDs.contains(commitSmaller.getCommitID())) {
+                return commitSmaller;
+            }
             if (checkedCommitIDs.contains(parentID)) {
                 return parentCommit;
             }
             commitsQueue.add(parentCommit);
             checkedCommitIDs.add(parentID);
+            String secondParentID = latestCommit.getSecondParentID();
+            Commit secondParentCommit = getCommit(secondParentID);
+            if (secondParentID != null) {
+                if (checkedCommitIDs.contains(secondParentCommit)){
+                    return secondParentCommit;
+                }
+                commitsQueue.add(secondParentCommit);
+                checkedCommitIDs.add(secondParentID);
+            }
         }
+    }
+
+    public static Commit smallerCommit(Commit a, Commit b) {
+        Comparator<Commit> commitComparator = Comparator.comparing(Commit::getDate);
+        if (commitComparator.compare(a, b) < 0) {
+            return a;
+        }
+        return b;
     }
 
     /**
@@ -115,68 +136,99 @@ public class HelpMethod implements Serializable{
         Map<String, String> splitTracked = splitCommit.getFiles();
         Map<String, String> headTracked = headCommit.getFiles();
         Map<String, String> otherTracked = otherCommit.getFiles();
-        Set<String> checkedSplit = splitTracked.keySet();
-        Set<String> checkedOther = otherTracked.keySet();
-        for (String filePath : checkedSplit) {
+        Set<String> allFilePath = new HashSet<>();
+        allFilePath.addAll(splitTracked.keySet());
+        allFilePath.addAll(headTracked.keySet());
+        allFilePath.addAll(otherTracked.keySet());
+        for (String filePath : allFilePath) {
             String splitID = splitTracked.get(filePath);
             String headID = headTracked.get(filePath);
             String otherID = otherTracked.get(filePath);
-            if (headID != null) {
-                if (headID.equals(splitID)) {
-                    if (otherID == null) {
-                        restrictedDelete(filePath);
-                        stageArea.remove(filePath);
-                        flag = true;
-                    } else if (!headID.equals(otherID)) {
-                        Blob otherBlob = getBlob(otherTracked.get(filePath));
-                        updateFileWithBlob(filePath, otherBlob);
-                        stageArea.add(otherBlob.getCurrentFile());
-                        flag = true;
-                    }
-                } else if (otherID != null) {
-                    if (!otherID.equals(headID)) {
-                        flag = conflictMerge(filePath, headTracked, otherTracked);
-                    }
-                }
-            }
-            checkedOther.remove(filePath);
-        }
-        for (String filePath : checkedOther) {
-            String otherID = otherTracked.get(filePath);
-            String splitID = splitTracked.get(filePath);
-            String headID = headTracked.get(filePath);
-            if (splitID == null && headID == null) {
-                Blob otherBlob = getBlob(otherTracked.get(filePath));
-                if (getFileByName(filePath).length() != 0) {
-                    exit("There is an untracked file in the way; delete it, or add and commit it first.");
-                }
-                updateFileWithBlob(filePath, otherBlob);
-                stageArea.add(otherBlob.getCurrentFile());
-                flag = true;
-            }
-            if (splitID == null && headID != null && !otherID.equals(headID)) {
-                flag = conflictMerge(filePath, headTracked, otherTracked);
+            //System.out.println(filePath);
+            //System.out.println(splitID);
+            //System.out.println(headID);
+            //System.out.println(otherID);
+
+            Integer action = check(splitID, headID, otherID);
+            //System.out.println(action.toString());
+            if (action == 1) { //Overwrite without alert because head is not empty.
+                overwriteMerge(filePath, otherTracked, action);
+            } else if (action == 2) { // Remove file from head.
+                removeMerge(filePath);
+            } else if (action == 3) { // overwrite with alert because head is empty.
+                overwriteMerge(filePath, otherTracked, action);
+            } else if (action == 4) { // Conflict. Add existing other content into existing head
+                flag = conflictMerge(filePath,  headTracked, otherTracked);
+            } else if (action == 5) { // Conflict. Add empty other content into existing head.
+                flag = conflictOtherEmpty(filePath,  headTracked);
+            } else if (action == 6) { // Conflict. Add existing other content into empty head.
+                flag = conflictHeadEmpty(filePath, otherTracked);
             }
         }
         return flag;
     }
 
-    /**
-     *
-     * */
+    public static int check(String splitID, String headID, String otherID) {
+        if (splitID != null) {
+            if (splitID.equals(headID)) {
+                if (otherID != null && !otherID.equals(headID)) {
+                    return 1; // A A !A !A overwrite
+                } else if (otherID == null) {
+                    return 2; // D D X X remove
+                }
+            } else if (otherID != null && !otherID.equals(headID)) {
+                if (!otherID.equals(splitID) && headID == null) {
+                    return 6; // ConflictMerge with one empty files. HEAD empty.
+                } else if (headID != null & ! otherID.equals(splitID)){
+                    return 4; // ConflictMerge with two files.
+                }
+            } else if (otherID == null && headID != null) {
+                return 5; // cConflictMerge with one empty files. other empty.
+            }
+        } else {
+            if (headID == null && otherID != null) {
+                return 3; // X X !A !A Overwrite with alert!
+            } else if (headID != null && otherID != null && !headID.equals(otherID)) {
+                return 4; // ConflictMerge with two files.
+            }
+        }
+        return 0; // otherwise no change need to be added into HEAD.
+    }
+
     public static boolean conflictMerge(String filePath, Map<String, String> headMap, Map<String, String> otherMap) {
         Blob otherBlob = getBlob(otherMap.get(filePath));
         Blob headBlob = getBlob(headMap.get(filePath));
-        updatedFileMerged(filePath, headBlob, otherBlob);
-        getStagingArea().add(otherBlob.getCurrentFile());
+        updatedFileMerged(filePath, headBlob.getFileContents().toString(), otherBlob.getFileContents().toString());
+        getStagingArea().add(join(filePath));
         return true;
     }
 
-    public static void overwriteMerge(String filePath, Map<String, String> headMap, Map<String, String> otherMap) {
-        Blob otherBlob = getBlob(otherMap.get(filePath));
+    public static boolean conflictOtherEmpty(String filePath, Map<String, String> headMap) {
         Blob headBlob = getBlob(headMap.get(filePath));
-        updatedFileMerged(filePath, headBlob, otherBlob);
-        getStagingArea().add(otherBlob.getCurrentFile());
+        updatedFileMerged(filePath, headBlob.getFileContents().toString(), "");
+        getStagingArea().add(join(filePath));
+        return true;
+    }
+
+    public static boolean conflictHeadEmpty(String filePath, Map<String, String> otherMap) {
+        Blob headBlob = getBlob(otherMap.get(filePath));
+        updatedFileMerged(filePath,"", headBlob.getFileContents().toString());
+        getStagingArea().add(join(filePath));
+        return true;
+    }
+
+    public static void overwriteMerge(String filePath, Map<String, String> otherMap, Integer action) {
+        Blob otherBlob = getBlob(otherMap.get(filePath));
+        if (action == 3 && getFileByName(filePath).length() != 0) {
+            exit("There is an untracked file in the way; delete it, or add and commit it first.");
+        }
+        updateFileWithBlob(filePath, otherBlob);
+        getStagingArea().add(join(filePath));
+    }
+
+    public static void removeMerge(String filePath) {
+        restrictedDelete(filePath);
+        getStagingArea().remove(filePath);
     }
 
 
@@ -331,11 +383,11 @@ public class HelpMethod implements Serializable{
         writeContents(join(filePath), blob.getFileContents());
     }
 
-    public static void updatedFileMerged(String filePath, Blob head, Blob given) {
+    public static void updatedFileMerged(String filePath, String head, String given) {
         String text1 = "<<<<<<< HEAD" + "\n";
-        String text2 = head.getFileContents().toString();
+        String text2 = head;
         String text3 = "=======" + "\n";
-        String text4 = given.getFileContents().toString();
+        String text4 = given;
         String text5 = ">>>>>>>" + '\n';
         writeContents(join(filePath), text1 + text2 + text3 + text4 + text5);
 

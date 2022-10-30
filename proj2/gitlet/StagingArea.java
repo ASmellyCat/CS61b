@@ -234,7 +234,7 @@ public class StagingArea implements Serializable {
         return tracked.containsKey(filePath);
     }
 
-    /** save this Staging Area instance. */
+    /** Save this Staging Area instance. */
     private void save() {
         writeObject(Repository.INDEX, this);
     }

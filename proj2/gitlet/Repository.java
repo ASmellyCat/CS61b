@@ -383,18 +383,22 @@ public class Repository {
         Commit otherCommit = getCommit(getCommitIDByBranchName(branchName));
         Commit headCommit = getCommit(getCurrentCommitID());
         Commit splitCommit = getSplitCommit(headCommit, otherCommit);
-        if (splitCommit.getCommitID().equals(headCommit.getCommitID())) {
-            checkout(branchName);
+        String otherID = otherCommit.getCommitID();
+        String headID = headCommit.getCommitID();
+        String splitID = splitCommit.getCommitID();
+        if (splitID.equals(headID)) {
+            checkoutBranch(branchName);
             System.out.print("Current branch fast-forwarded.");
-        } else if (!splitCommit.getCommitID().equals(otherCommit.getCommitID())) {
+        } else if (splitID.equals(otherID)) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+        } else {
             boolean isConflict = toMerge(splitCommit, headCommit, otherCommit);
             commit("Merged " + branchName + " into " + getActiveBranchFile().getName()
                     + ".", otherCommit.getCommitID());
             if (isConflict) {
                 System.out.print("Encountered a merge conflict.");
             }
-        } else {
-            System.out.println("Given branch is an ancestor of the current branch.");
+
         }
     }
 }

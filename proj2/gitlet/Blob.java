@@ -16,9 +16,9 @@ import static gitlet.HelpMethod.*;
  */
 
 public class Blob implements Serializable {
-    /** the content of a file that converted into a blob.*/
+    /** the content of a file that converted into a blob. */
     private final String fileContents;
-    /** the SHA-1 ID of a blob*/
+    /** the SHA-1 ID of a blob. */
     private final String fileID;
     /** the absolute filepath of a blob. */
     private final String filePath;

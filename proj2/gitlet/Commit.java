@@ -94,6 +94,12 @@ public class Commit implements Serializable {
     }
 
     /**
+     * get the second parent SHA-1 ID of this commit.
+     * */
+    public String getSecondParentID() {
+        return secondParentID;
+    }
+    /**
      * get date of the time that this commit was created.
      */
     public Date getDate() {
