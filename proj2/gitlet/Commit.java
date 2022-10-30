@@ -5,7 +5,6 @@ import java.io.Serializable;
 
 import static gitlet.HelpMethod.*;
 import static gitlet.MyUtils.updateIntoFile;
-import static gitlet.Repository.CWD;
 import static gitlet.Repository.OBJECT_DIR;
 import static gitlet.Utils.*;
 
@@ -125,7 +124,8 @@ public class Commit implements Serializable {
         Map<String, String> newMap = new HashMap<>();
         for (String path : tracked.keySet()) {
             String fileID = tracked.get(path);
-            newMap.put(join(fileDir.getParentFile(), join(path).getName()).getAbsolutePath(), fileID);
+            newMap.put(join(fileDir.getParentFile(),
+                    join(path).getName()).getAbsolutePath(), fileID);
         }
         tracked.clear();
         tracked.putAll(newMap);

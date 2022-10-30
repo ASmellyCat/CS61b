@@ -57,10 +57,8 @@ public class Remote implements Serializable {
         String commitID = getCommitIDByBranchName(remoteBranchName, remoteHeadDir);
         Set<Commit> commitSet = getAllParentCommits(commitID, objectDir);
         for (Commit commit : commitSet) {
-            //saveObjectFile(objectFile(commit.getCommitID()), objectFile(commit.getCommitID(), objectDir));
             commit.updatePath(GITLET_DIR);
             for (String fileID : commit.getFiles().values()) {
-                //saveObjectFile(objectFile(fileID), objectFile(fileID, objectDir));
                 getBlob(fileID, objectDir).updatePath();
             }
         }
@@ -89,8 +87,8 @@ public class Remote implements Serializable {
         }
         File branchFile = join(remote.get(remoteName), "refs/heads", remoteBranchName);
         writeContents(branchFile, getCurrentCommitID());
-        writeContents(join(remote.get(remoteName),"HEAD"), "ref: " +
-                branchFile.getAbsolutePath());
+        writeContents(join(remote.get(remoteName), "HEAD"), "ref: "
+                + branchFile.getAbsolutePath());
     }
 
     /** save this remote instance. */
