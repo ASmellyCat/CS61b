@@ -22,19 +22,19 @@ public class MyUtils implements Serializable {
         }
     }
 
-    /** get File by short name*/
+    /** Get File by short name*/
     public static File getFileByName(String name) {
         return join(absolutePath(name));
     }
 
-    /**convert absolute file name to relative file name. */
+    /** Convert absolute file name to relative file name. */
     public static String getRelativeFileName(String filePath) {
         String[] s = filePath.split("/");
         return s[s.length - 1];
 
     }
 
-    /** change file name or absolute file path into absolute file path*/
+    /** Change file name or absolute file path into absolute file path*/
     public static String absolutePath(String fileName) {
         if (fileName.contains("/")) {
             return fileName;

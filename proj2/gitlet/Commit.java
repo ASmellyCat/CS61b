@@ -120,7 +120,7 @@ public class Commit implements Serializable {
     }
 
 
-    /** update the commit file path to current path. */
+    /** update the commit file path to given directory. */
     public void updatePath(File fileDir) {
         Map<String, String> newMap = new HashMap<>();
         for (String path : tracked.keySet()) {

@@ -433,7 +433,7 @@ public class Repository {
     /**
      * add-remote
      * Saves the given login information under the given remote name.
-     * */
+     */
     public static void addRemote(String remoteName, String remoteAdress) {
         getRmote().add(remoteName, remoteAdress);
     }
@@ -441,7 +441,7 @@ public class Repository {
     /**
      * rm-remote
      * Remove information associated with the given remote name.
-     * */
+     */
     public static void removeRemote(String remoteName) {
         getRmote().remove(remoteName);
     }
@@ -449,7 +449,7 @@ public class Repository {
     /**
      * fetch
      * Brings down commits from the remote Gitlet repository into the local Gitlet repository.
-     * */
+     */
     public static void fetch(String remoteName, String remoteBranchName) {
         getRmote().fetch(remoteName, remoteBranchName);
     }
@@ -458,7 +458,7 @@ public class Repository {
      * push
      * Attempts to append the current branch’s commits to
      * the end of the given branch at the given remote.
-     * */
+     */
     public static void push(String remoteName, String remoteBranchName) {
         getRmote().push(remoteName, remoteBranchName);
     }
@@ -466,7 +466,7 @@ public class Repository {
      * pull
      * Fetches branch [remote name]/[remote branch name] as for the fetch command,
      * and then merges that fetch into the current branch.
-     * */
+     */
     public static void pull(String remoteName, String remoteBranchName) {
         fetch(remoteName, remoteBranchName);
         merge(remoteName + "/" + remoteBranchName);

@@ -174,7 +174,7 @@ public class StagingArea implements Serializable {
         return returnFileNames;
     }
 
-    /** files present in the working directory but neither staged for addition nor tracked.
+    /** Files present in the working directory but neither staged for addition nor tracked.
      * This includes files that have been staged for removal,
      * but then re-created without Gitlet’s knowledge.
      * Ignore any subdirectories that may have been introduced,
@@ -249,3 +249,4 @@ public class StagingArea implements Serializable {
         removed.clear();
     }
 }
+

@@ -10,6 +10,7 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ...
      *  java gitlet.Main add hello.txt
      *  java gitlet.Main commit "modified"
+     *  java gitlet.Main rm hello.txt
      */
     public static void main(String[] args) {
         String fileName;

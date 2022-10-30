@@ -19,6 +19,7 @@ public class Remote implements Serializable {
         save();
     }
 
+    /** add remote and its file directory in to set. */
     public void add(String remoteName, String remoteAdress) {
         if (remote.containsKey(remoteName)) {
             exit("A remote with that name already exists.");
@@ -29,6 +30,7 @@ public class Remote implements Serializable {
         save();
     }
 
+    /** remove remote and its file directory out of set. */
     public void remove(String remoteName) {
         if (!remote.containsKey(remoteName)) {
             exit("A remote with that name does not exist.");

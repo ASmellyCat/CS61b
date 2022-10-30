@@ -69,17 +69,17 @@ public class Blob implements Serializable {
         saveObjectFile(objectFile, this);
     }
 
+    /** update the file path of blob. */
     public void updatePath() {
         filePath = join(CWD, currentFile.getName()).getAbsolutePath();
         save();
     }
-
     public void updatePath(File fileDir) {
         filePath = join(fileDir.getParentFile(), currentFile.getName()).getAbsolutePath();
         save(join(fileDir, OBJECT_DIR.getName()));
     }
 
-    /** get blob source file. */
+    /** Get blob source file. */
     public File getCurrentFile() {
         return currentFile;
     }

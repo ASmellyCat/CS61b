@@ -361,7 +361,7 @@ public class HelpMethod implements Serializable {
             printLog(getCommit(commit.getParentID()));
         }
     }
-    /** printed one commit in required format. */
+    /** Printed one commit in required format. */
     public static void printOneLog(Commit commit) {
         System.out.println("===");
         System.out.println("commit " + commit.getCommitID());
@@ -370,7 +370,7 @@ public class HelpMethod implements Serializable {
         System.out.println();
     }
 
-    /** get the branch names in a list. */
+    /** Get the branch names in a list. */
     public static List<String> getBranchNames() {
         return getBranchNames(HEADS_DIR);
     }

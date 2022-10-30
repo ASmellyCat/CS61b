@@ -2,6 +2,8 @@
 
 **Name**: ASmellyCat
 
+finished all!!!!!
+
 Classes and Data Structures
 
      * .gitlet
